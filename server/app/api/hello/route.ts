@@ -1,9 +1,11 @@
-import { NextResponse } from "next/server";
+import { successResponse, errorResponse } from "@/lib/apiResponse";
 import { connectDB } from "@/lib/db";
 
 export async function GET() {
-  // Call it at the top of every Route Handler that needs the database
-  await connectDB();
-
-  return NextResponse.json({ message: "Database connection successful!" });
+  try {
+    await connectDB();
+    return successResponse({ message: "Database connection successful!" });
+  } catch (error: any) {
+    return errorResponse(error.message, 'SERVER_ERROR', 500);
+  }
 }

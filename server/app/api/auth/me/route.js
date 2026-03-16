@@ -1,14 +1,14 @@
-import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 import { getAuthUser } from "@/lib/authHelper";
+import { successResponse, errorResponse } from "@/lib/apiResponse";
 
 export async function GET(request) {
   try {
     const userPayload = await getAuthUser(request);
     
     if (!userPayload) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
     }
 
     await connectDB();
@@ -17,23 +17,16 @@ export async function GET(request) {
     const user = await User.findById(userPayload.userId).select("-password");
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return errorResponse("User not found", "NOT_FOUND", 404);
     }
 
-    return NextResponse.json(
-      { 
-        message: "Profile fetched successfully.",
-        user 
-      },
-      { status: 200 } 
-    );
+    return successResponse({ 
+      message: "Profile fetched successfully.",
+      user 
+    }, 200);
 
   } catch (error) {
     console.error("Fetch profile error:", error);
-    
-    return NextResponse.json(
-      { message: "Internal server error." },
-      { status: 500 }
-    );
+    return errorResponse(error.message, 'SERVER_ERROR', 500);
   }
 }

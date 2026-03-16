@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { successResponse, errorResponse } from "@/lib/apiResponse";
 
 export async function POST(request) {
   try {
@@ -12,27 +12,17 @@ export async function POST(request) {
     const { email, password } = body;
 
     if (!email || !password) {
-      return NextResponse.json(
-        { message: "Please provide email and password." },
-        { status: 400 }
-      );
+      return errorResponse("Please provide email and password.", "VALIDATION_ERROR", 400);
     }
 
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
-
-      return NextResponse.json(
-        { message: "Invalid credentials." },
-        { status: 401 }
-      );
+      return errorResponse("Invalid credentials.", "UNAUTHORIZED", 401);
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return NextResponse.json(
-        { message: "Invalid credentials." },
-        { status: 401 }
-      );
+      return errorResponse("Invalid credentials.", "UNAUTHORIZED", 401);
     }
 
 
@@ -48,24 +38,18 @@ export async function POST(request) {
     );
 
 
-    return NextResponse.json(
-      { 
-        message: "Login successful!", 
-        token,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email
-        }
-      },
-      { status: 200 }
-    );
+    return successResponse({ 
+      message: "Login successful!", 
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
+    }, 200);
 
   } catch (error) {
     console.error("Login error:", error);
-    return NextResponse.json(
-      { message: "Internal server error during login." },
-      { status: 500 }
-    );
+    return errorResponse(error.message, 'SERVER_ERROR', 500);
   }
 }

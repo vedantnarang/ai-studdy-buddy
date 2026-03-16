@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
+import { successResponse, errorResponse } from "@/lib/apiResponse";
 
 export async function POST(request) {
   try {
@@ -10,18 +10,12 @@ export async function POST(request) {
     const { name, email, password } = body;
 
     if (!name || !email || !password) {
-      return NextResponse.json(
-        { message: "Please provide name, email, and password." },
-        { status: 400 }
-      );
+      return errorResponse("Please provide name, email, and password.", "VALIDATION_ERROR", 400);
     }
 
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
-      return NextResponse.json(
-        { message: "A user with this email already exists." },
-        { status: 409 } 
-      );
+      return errorResponse("A user with this email already exists.", "CONFLICT", 409);
     }
 
 
@@ -30,30 +24,22 @@ export async function POST(request) {
       email,
       password,
     });
-    return NextResponse.json({ 
-        message: "User registered successfully!", 
-        user: {
-          id: newUser._id,
-          name: newUser.name,
-          email: newUser.email
-        }
-      },
-      { status: 201 } 
-    );
+    return successResponse({ 
+      message: "User registered successfully!", 
+      user: {
+        id: newUser._id,
+        name: newUser.name,
+        email: newUser.email
+      }
+    }, 201);
 
   } catch (error) {
     console.error("Registration error:", error);
     
     if (error.name === "ValidationError") {
-      return NextResponse.json(
-        { message: error.message },
-        { status: 400 }
-      );
+      return errorResponse(error.message, "VALIDATION_ERROR", 400);
     }
 
-    return NextResponse.json(
-      { message: "Internal server error during registration." },
-      { status: 500 }
-    );
+    return errorResponse(error.message, 'SERVER_ERROR', 500);
   }
 }
