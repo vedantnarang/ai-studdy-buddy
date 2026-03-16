@@ -1,0 +1,434 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.app{font-family:var(--font-sans);padding:16px 0}
+.top-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+.pnav{font-size:12px;font-weight:500;padding:5px 12px;border-radius:20px;cursor:pointer;border:0.5px solid var(--color-border-tertiary);color:var(--color-text-secondary);background:transparent;transition:all .15s}
+.pnav.active{color:#fff;border-color:transparent}
+.phase-view{display:none}.phase-view.active{display:block}
+.phase-header{margin-bottom:18px}
+.phase-header h2{font-size:18px;font-weight:500;color:var(--color-text-primary);margin-bottom:3px}
+.phase-header p{font-size:13px;color:var(--color-text-secondary)}
+.feature-card{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden;margin-bottom:12px}
+.fc-head{padding:12px 16px;cursor:pointer;display:flex;align-items:flex-start;gap:12px;user-select:none}
+.fc-head:hover{background:var(--color-background-secondary)}
+.fc-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:1px}
+.fc-meta{flex:1}
+.fc-title{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px}
+.fc-tools{display:flex;flex-wrap:wrap;gap:4px}
+.fc-tool{font-size:11px;padding:2px 7px;border-radius:12px;font-weight:500}
+.fc-chev{font-size:11px;color:var(--color-text-tertiary);padding-top:2px;transition:transform .2s}
+.fc-chev.open{transform:rotate(90deg)}
+.fc-body{display:none;border-top:0.5px solid var(--color-border-tertiary);padding:14px 16px}
+.fc-body.open{display:block}
+.steps-label{font-size:11px;font-weight:500;letter-spacing:.05em;color:var(--color-text-tertiary);text-transform:uppercase;margin-bottom:10px}
+.step{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start}
+.step:last-child{margin-bottom:0}
+.step-num{width:20px;height:20px;border-radius:50%;font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-text{font-size:13px;color:var(--color-text-secondary);line-height:1.65}
+.step-text code{font-family:var(--font-mono);font-size:12px;background:var(--color-background-secondary);padding:1px 5px;border-radius:4px;color:var(--color-text-primary)}
+.step-text strong{color:var(--color-text-primary);font-weight:500}
+</style>
+
+<div class="app">
+  <div class="top-nav" id="nav"></div>
+  <div id="phases-container"></div>
+</div>
+
+<script>
+const PHASES = [
+  {
+    id:0, color:"#378ADD", lightBg:"#E6F1FB", darkBg:"#042C53", lightFg:"#0C447C", darkFg:"#85B7EB",
+    stepBg:"#E6F1FB", stepFg:"#0C447C", stepDarkBg:"#042C53", stepDarkFg:"#85B7EB",
+    label:"Phase 1", title:"Project Foundations & Auth", dates:"Mar 16–17 · 2 days",
+    features:[
+      {
+        icon:"🗂",
+        title:"Server & Database Initialization",
+        tools:["Node.js 20+","Express 4","Mongoose 8","MongoDB Atlas","dotenv","cors","helmet"],
+        steps:[
+          "Create the monorepo root folder <code>ai-study-buddy/</code> with two sub-folders: <code>server/</code> and <code>client/</code>. Run <code>npm init -y</code> inside <code>server/</code>.",
+          "Install core packages: <code>npm install express mongoose dotenv cors helmet</code>. Install dev deps: <code>npm install -D nodemon</code>.",
+          "Create <code>server/server.js</code> as the entry point. Import Express, apply <code>helmet()</code> (sets secure HTTP headers) and <code>cors()</code> middleware, then <code>express.json()</code> to parse request bodies.",
+          "Create <code>server/config/db.js</code>. Use <code>mongoose.connect(process.env.MONGODB_URI)</code> wrapped in a try/catch. Export a <code>connectDB()</code> function and call it from <code>server.js</code> before starting the server.",
+          "Create <code>.env</code> with <code>PORT</code>, <code>MONGODB_URI</code>, and <code>JWT_SECRET</code>. Create <code>.env.example</code> with placeholder values. Add <code>.env</code> to <code>.gitignore</code> immediately.",
+          "Run <code>node server.js</code> — confirm <strong>'MongoDB connected'</strong> logs without errors before continuing. This is your foundation; everything else builds on this."
+        ]
+      },
+      {
+        icon:"🔐",
+        title:"User Authentication Flow",
+        tools:["bcrypt 5","jsonwebtoken 9","Mongoose 8"],
+        steps:[
+          "Create <code>server/models/User.js</code>. Define a Mongoose schema with <code>name</code>, <code>email</code> (unique), <code>password</code>, and <code>createdAt</code>. Add a pre-save hook using <code>bcrypt.hash()</code> to auto-hash the password before it ever reaches the DB.",
+          "Create <code>server/routes/auth.routes.js</code> and mount it in <code>server.js</code> at <code>/api/auth</code>.",
+          "Build <code>POST /register</code>: check if email already exists → create user → sign a JWT with <code>jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' })</code> → return token.",
+          "Build <code>POST /login</code>: find user by email → use <code>bcrypt.compare()</code> to verify password → sign and return a JWT on success, return 401 on failure.",
+          "Create <code>server/middleware/auth.js</code>. Extract the Bearer token from the <code>Authorization</code> header → <code>jwt.verify()</code> → attach <code>req.user = { id: decoded.id }</code> → call <code>next()</code>. On failure, return 401.",
+          "Build <code>GET /me</code> protected by the auth middleware: query <code>User.findById(req.user.id).select('-password')</code> and return the user object. Test all three routes in Thunder Client before moving on."
+        ]
+      },
+      {
+        icon:"⚠️",
+        title:"Centralized Error Handling",
+        tools:["Express 4"],
+        steps:[
+          "Create <code>server/middleware/errorHandler.js</code>. This is a 4-argument Express middleware: <code>(err, req, res, next)</code>.",
+          "Inside it, determine the status code — default to 500 if not set. Return a consistent JSON shape: <code>{ success: false, error: { message: err.message, code: err.code || 'SERVER_ERROR' } }</code>.",
+          "Register it as the <strong>last</strong> middleware in <code>server.js</code>, after all routes. From every controller, you'll call <code>next(error)</code> instead of writing inline <code>res.status(500)</code> — this keeps error handling in one place forever."
+        ]
+      }
+    ]
+  },
+  {
+    id:1, color:"#1D9E75", lightBg:"#E1F5EE", darkBg:"#04342C", lightFg:"#085041", darkFg:"#9FE1CB",
+    stepBg:"#E1F5EE", stepFg:"#085041", stepDarkBg:"#04342C", stepDarkFg:"#9FE1CB",
+    label:"Phase 2", title:"Core CRUD APIs", dates:"Mar 18–19 · 2 days",
+    features:[
+      {
+        icon:"📚",
+        title:"Subject CRUD",
+        tools:["Mongoose 8","Zod","Express 4","JWT auth middleware"],
+        steps:[
+          "Create <code>server/models/Subject.js</code> with fields: <code>userId</code> (ObjectId ref User, required), <code>title</code>, <code>description</code>, timestamps.",
+          "Create <code>server/routes/subject.routes.js</code> and <code>server/controllers/subject.controller.js</code>. Mount at <code>/api/subjects</code>, protect all routes with the auth middleware.",
+          "<strong>GET /</strong>: <code>Subject.find({ userId: req.user.id })</code> — always scope by userId.",
+          "<strong>POST /</strong>: Validate body with Zod (<code>z.object({ title: z.string().min(1), description: z.string().optional() })</code>). Create and save the subject.",
+          "<strong>PUT /:id</strong>: <code>Subject.findOneAndUpdate({ _id: id, userId: req.user.id }, ...)</code> — the dual filter prevents one user from editing another's data.",
+          "<strong>DELETE /:id</strong>: Same dual filter with <code>findOneAndDelete</code>. Return 404 if not found. Test all 4 routes in Thunder Client with a real JWT before continuing."
+        ]
+      },
+      {
+        icon:"📝",
+        title:"Topic CRUD & Notes",
+        tools:["Mongoose 8","Zod","Express 4"],
+        steps:[
+          "Create <code>server/models/Topic.js</code>: fields <code>subjectId</code>, <code>userId</code>, <code>title</code>, <code>notes</code> (String), <code>summary</code> (String, nullable), <code>sourceImages</code> (array of <code>{ url, publicId, extractedText, uploadedAt }</code>).",
+          "Create topic routes nested under subjects: <code>GET /api/subjects/:subjectId/topics</code> and <code>POST /api/subjects/:subjectId/topics</code>. Always filter by both <code>subjectId</code> and <code>userId</code>.",
+          "Add standalone topic routes: <code>PUT /api/topics/:id</code> (update title) and <code>DELETE /api/topics/:id</code>.",
+          "Add <code>PUT /api/topics/:topicId/notes</code>: accepts <code>{ notes: string }</code> in body, validates with Zod, updates <code>topic.notes</code> and sets <code>topic.updatedAt</code>. This is where all typed study material is saved.",
+          "Create <code>server/models/Flashcard.js</code> and <code>server/models/Quiz.js</code> schemas now (empty, no routes yet) so they're ready for Phase 3."
+        ]
+      },
+      {
+        icon:"🛡",
+        title:"Input Validation Pattern",
+        tools:["Zod","Express 4"],
+        steps:[
+          "Create <code>server/middleware/validate.js</code>: a factory function that accepts a Zod schema and returns an Express middleware. Inside, call <code>schema.safeParse(req.body)</code>.",
+          "On failure, format Zod's error array into a readable message and pass a 400 error to <code>next()</code>. On success, replace <code>req.body</code> with the parsed (safe, typed) data and call <code>next()</code>.",
+          "Wrap every route that accepts a body: <code>router.post('/', validate(createSubjectSchema), subjectController.create)</code>. This keeps validation logic out of controllers and makes it reusable."
+        ]
+      }
+    ]
+  },
+  {
+    id:2, color:"#7F77DD", lightBg:"#EEEDFE", darkBg:"#26215C", lightFg:"#3C3489", darkFg:"#CECBF6",
+    stepBg:"#EEEDFE", stepFg:"#3C3489", stepDarkBg:"#26215C", stepDarkFg:"#CECBF6",
+    label:"Phase 3", title:"File Uploads & AI Integration", dates:"Mar 20–22 · 3 days",
+    features:[
+      {
+        icon:"☁️",
+        title:"Cloudinary & File Upload Setup",
+        tools:["Multer 1","Cloudinary 2","pdf-parse"],
+        steps:[
+          "Install: <code>npm install multer cloudinary pdf-parse</code>. Create a Cloudinary account and add <code>CLOUDINARY_CLOUD_NAME</code>, <code>CLOUDINARY_API_KEY</code>, <code>CLOUDINARY_API_SECRET</code> to <code>.env</code>.",
+          "Create <code>server/services/cloudinary.service.js</code>: configure the Cloudinary SDK and export an <code>uploadImage(buffer, options)</code> function that uploads a buffer using <code>cloudinary.uploader.upload_stream()</code> and returns <code>{ url, public_id }</code>.",
+          "Create <code>server/middleware/upload.js</code>: configure Multer with <code>memoryStorage()</code> (store file in RAM as buffer, not on disk), set a 5MB file size limit, and validate MIME types — accept only <code>image/png</code>, <code>image/jpeg</code>, <code>image/webp</code>, <code>application/pdf</code>, <code>text/plain</code>.",
+          "Build <code>POST /api/topics/:topicId/upload</code>: use Multer middleware → if PDF, run <code>pdf-parse(req.file.buffer)</code> to extract text → save text to <code>topic.notes</code>. If .txt, decode buffer with <code>req.file.buffer.toString('utf-8')</code>.",
+          "Build <code>POST /api/topics/:topicId/upload-image</code>: use Multer → upload buffer to Cloudinary → call AI service to extract text from the buffer → push <code>{ url, publicId, extractedText }</code> into <code>topic.sourceImages</code>."
+        ]
+      },
+      {
+        icon:"🤖",
+        title:"AI Service — Text Generation",
+        tools:["@openrouter/ai-sdk-provider","ai (Vercel AI SDK)","Zod"],
+        steps:[
+          "Install: <code>npm install @openrouter/ai-sdk-provider ai zod</code>. Add <code>OPENROUTER_API_KEY</code>, <code>OPENROUTER_PRIMARY_MODEL=google/gemma-3-27b-it:free</code>, and <code>OPENROUTER_FALLBACK_MODEL=qwen/qwen2.5-vl-72b-instruct:free</code> to <code>.env</code>.",
+          "<strong>Before writing any routes</strong> — create <code>server/test-ai.js</code> and run it: <code>generateText({ model: openrouter('google/gemma-3-27b-it:free'), prompt: 'Say hello' })</code>. Only proceed once you see a real response.",
+          "Create <code>server/services/ai.service.js</code>. Instantiate the OpenRouter provider with <code>createOpenRouter({ apiKey })</code>. Write a <code>getModel(useFallback)</code> helper that returns the primary or fallback model reference.",
+          "Implement <code>generateSummary(notes)</code> using <code>generateText()</code>. Wrap in try/catch: on a <code>429</code> statusCode, retry with <code>getModel(true)</code>. On any other error, rethrow to the controller.",
+          "Implement <code>extractTextFromImage(buffer, mimeType)</code> using <code>generateText()</code> with a messages array. The content array contains two parts: a text instruction object and <code>{ type: 'image', image: buffer, mimeType }</code>. Same 429 fallback pattern."
+        ]
+      },
+      {
+        icon:"🧠",
+        title:"AI Service — Structured Generation",
+        tools:["ai (Vercel AI SDK)","Zod","@openrouter/ai-sdk-provider"],
+        steps:[
+          "Create <code>server/schemas/ai.schemas.js</code>. Define <code>FlashcardSchema</code> using Zod: <code>z.object({ flashcards: z.array(z.object({ question: z.string(), answer: z.string() })) })</code>.",
+          "Define <code>QuizSchema</code>: <code>z.object({ questions: z.array(z.object({ question, options: z.array(z.string()).length(4), correctIndex: z.number().min(0).max(3), explanation })) })</code>.",
+          "Implement <code>generateFlashcards(notes, count=10)</code> using <code>generateObject({ model, schema: FlashcardSchema, prompt })</code>. The returned <code>object.flashcards</code> is already validated — no JSON parsing needed.",
+          "Implement <code>generateQuiz(notes, count=5)</code> the same way with <code>QuizSchema</code>. Add 429 fallback logic to both.",
+          "Implement <code>generateFlashcardsFromImage(buffer, mimeType, count)</code> and <code>generateQuizFromImage</code>: use <code>generateObject()</code> but pass a <code>messages</code> array (same text + image pattern) instead of a plain <code>prompt</code>."
+        ]
+      },
+      {
+        icon:"🔁",
+        title:"Generation Routes & Caching",
+        tools:["Express 4","Mongoose 8","AI service"],
+        steps:[
+          "Create the generation routes: <code>POST /api/topics/:topicId/generate/flashcards</code>, <code>/quiz</code>, <code>/summary</code>. Protect all with auth middleware. Apply the <code>aiRateLimiter</code> middleware.",
+          "<strong>Caching check</strong>: In each controller, before calling the AI service, query the DB for existing content (<code>Flashcard.find({ topicId })</code>). If results exist and <code>req.body.regenerate !== true</code>, return cached data immediately — no AI call.",
+          "On generate: call the AI service → <code>Flashcard.insertMany()</code> or <code>Quiz.create()</code> → return saved documents.",
+          "Create <code>POST /api/generate/from-image</code>: accepts a multipart form with an image file and a <code>type</code> field ('flashcards' or 'quiz'). Run Multer → call <code>generateFlashcardsFromImage()</code> or <code>generateQuizFromImage()</code> based on type.",
+          "Create <code>server/middleware/aiRateLimiter.js</code> with an in-memory sliding window Map — 15 requests per user per minute. Returns a clear 429 JSON with <code>retryAfter</code> if exceeded."
+        ]
+      }
+    ]
+  },
+  {
+    id:3, color:"#EF9F27", lightBg:"#FAEEDA", darkBg:"#412402", lightFg:"#633806", darkFg:"#FAC775",
+    stepBg:"#FAEEDA", stepFg:"#633806", stepDarkBg:"#412402", stepDarkFg:"#FAC775",
+    label:"Phase 4", title:"React Frontend", dates:"Mar 23–25 · 3 days",
+    features:[
+      {
+        icon:"⚙️",
+        title:"Vite Setup, Router & API Client",
+        tools:["Vite","React 18","React Router v6","Axios","Tailwind CSS"],
+        steps:[
+          "Inside <code>client/</code>, run <code>npm create vite@latest . -- --template react</code>. Install: <code>npm install axios react-router-dom</code>. Set up Tailwind CSS following its Vite install guide.",
+          "Create <code>client/src/services/api.js</code>: create an Axios instance with <code>baseURL: import.meta.env.VITE_API_URL</code>. Add a request interceptor that reads the JWT from <code>localStorage</code> and attaches it as <code>Authorization: Bearer &lt;token&gt;</code> to every request automatically.",
+          "Add a response interceptor: on 401 response, clear the token from localStorage and redirect to <code>/login</code>. This handles expired tokens globally.",
+          "Wrap <code>App.jsx</code> in <code>&lt;BrowserRouter&gt;</code>. Define routes using React Router v6 <code>&lt;Routes&gt;</code> and <code>&lt;Route&gt;</code> for all pages. Create placeholder page components for each route so navigation works before pages are built."
+        ]
+      },
+      {
+        icon:"👤",
+        title:"Auth Context & Protected Routes",
+        tools:["React Context","useReducer","React Router v6"],
+        steps:[
+          "Create <code>client/src/context/AuthContext.jsx</code>. Define a reducer with actions: <code>LOGIN</code> (store user + token), <code>LOGOUT</code> (clear both), <code>SET_USER</code>. Initial state reads the JWT from <code>localStorage</code> so the session persists on page refresh.",
+          "In the AuthProvider, run a <code>useEffect</code> on mount that calls <code>GET /api/auth/me</code>. If the token is valid, dispatch <code>SET_USER</code> with the returned user. If the call fails (401), dispatch <code>LOGOUT</code> and clear storage.",
+          "Export a <code>useAuth()</code> hook that calls <code>useContext(AuthContext)</code>. Components use this to access <code>user</code>, <code>login(token)</code>, and <code>logout()</code>.",
+          "Create <code>client/src/components/ProtectedRoute.jsx</code>: check <code>useAuth().user</code>. While the initial <code>/me</code> check is loading, show a spinner. If no user after load, redirect to <code>/login</code> with <code>&lt;Navigate&gt;</code>.",
+          "Build <code>Login.jsx</code> and <code>Register.jsx</code> pages: controlled form inputs, client-side validation (empty check, email format), POST to auth endpoints, call <code>login(token)</code> on success and navigate to <code>/dashboard</code>."
+        ]
+      },
+      {
+        icon:"📖",
+        title:"Subjects & Topics Pages",
+        tools:["React 18","Axios","Custom hooks"],
+        steps:[
+          "Create <code>client/src/hooks/useSubjects.js</code>: fetch all subjects on mount, expose <code>{ subjects, loading, error, createSubject, deleteSubject }</code>. Keep API calls inside the hook, not in the component.",
+          "Build <code>SubjectsList.jsx</code>: map over subjects to show cards, a 'New Subject' button that opens an inline form, and delete with confirmation. Show an empty state illustration when the array is empty.",
+          "Build <code>SubjectDetail.jsx</code> (route <code>/subjects/:id</code>): fetch topics for the subject. Show topics as cards with links to their detail page. Add 'New Topic' form inline.",
+          "Build <code>TopicDetail.jsx</code> (route <code>/topics/:id</code>): fetch the topic. Render the notes textarea with auto-save on blur (debounced PUT to <code>/notes</code>). Show a character count. This is the main workspace page — it hosts the upload area and AI panel below."
+        ]
+      },
+      {
+        icon:"🖼",
+        title:"Image Upload Component",
+        tools:["React 18","Axios","Browser File API"],
+        steps:[
+          "Create <code>client/src/components/upload/ImageUpload.jsx</code>. Set up a drag-and-drop zone: listen to <code>onDragOver</code>, <code>onDrop</code>, and a hidden <code>&lt;input type='file'&gt;</code> for click-to-upload.",
+          "On file selection, generate a preview with <code>URL.createObjectURL(file)</code> and display it. Only accept <code>image/png, image/jpeg, image/webp</code> — reject others with an inline error message.",
+          "On confirm: POST to <code>/api/topics/:id/upload-image</code> using <code>FormData</code>. Show a loading spinner and 'AI is reading your image...' text while the request is in flight.",
+          "When the response comes back, show the AI-extracted text in an editable <code>&lt;textarea&gt;</code> below the preview. The user can edit it before it's appended to their topic notes. Show a 'Save to notes' button."
+        ]
+      },
+      {
+        icon:"✨",
+        title:"AI Generation Panel",
+        tools:["React 18","Axios"],
+        steps:[
+          "Create <code>client/src/components/AIPanel.jsx</code>. Three action buttons: <strong>Generate Flashcards</strong>, <strong>Generate Quiz</strong>, <strong>Generate Summary</strong>. Each button has its own loading state (a <code>useState</code> per action).",
+          "On click: check if content already exists. If yes, show a confirmation modal: 'This will replace existing content — are you sure?' Only call the API on confirm.",
+          "While loading, disable all three buttons and show a spinner inside the active one. Display the generation progress text: 'Generating 10 flashcards...'",
+          "On success: show a preview of generated content inline (first 3 flashcards, first 2 questions). Add 'View all' link to the study session page.",
+          "On 429 error from the API: display a friendly banner — 'You're generating too fast. Wait 60 seconds.' — styled in amber, not a raw error. Never show the user a raw error object."
+        ]
+      }
+    ]
+  },
+  {
+    id:4, color:"#D85A30", lightBg:"#FAECE7", darkBg:"#4A1B0C", lightFg:"#711F0F", darkFg:"#F5C4B3",
+    stepBg:"#FAECE7", stepFg:"#711F0F", stepDarkBg:"#4A1B0C", stepDarkFg:"#F5C4B3",
+    label:"Phase 5", title:"Study Sessions & Dashboard", dates:"Mar 26–27 · 2 days",
+    features:[
+      {
+        icon:"🃏",
+        title:"Flashcard Study Session",
+        tools:["React 18","CSS transforms","Custom hook"],
+        steps:[
+          "Create <code>useFlashcardSession(topicId)</code> hook: fetch cards, track <code>currentIndex</code>, <code>correct</code>/<code>missed</code> arrays. Expose <code>markCorrect()</code>, <code>markMissed()</code>, <code>next()</code>, <code>prev()</code>.",
+          "Build the card flip with CSS: wrap in a <code>.card-scene</code> div. The card has <code>.card-front</code> and <code>.card-back</code>, both <code>position: absolute</code>. Toggle a <code>.flipped</code> class that applies <code>transform: rotateY(180deg)</code> with <code>transition: 0.5s</code>. Set <code>backface-visibility: hidden</code> on both faces.",
+          "Show a progress bar: <code>width: (currentIndex / total) * 100 + '%'</code>. Show 'Card X of Y' label. Buttons: <strong>Show Answer</strong> (flips card), <strong>Got it ✓</strong> and <strong>Missed ✗</strong> (only visible after flip).",
+          "On final card completion: POST to <code>/api/sessions</code> with <code>{ topicId, type: 'flashcard', score, totalQuestions, correctAnswers }</code>. Then navigate to a results screen showing the breakdown."
+        ]
+      },
+      {
+        icon:"🧩",
+        title:"Quiz Session",
+        tools:["React 18","Custom hook"],
+        steps:[
+          "Create <code>useQuizSession(topicId)</code> hook: fetch the quiz, track <code>currentQuestion</code>, <code>selectedAnswer</code>, <code>answers</code> array, <code>isRevealed</code>.",
+          "Build <code>QuizQuestion.jsx</code>: show the question text, then 4 option buttons (A–D). On click: set selected answer and reveal. Color the selected button red or green based on correctness. Show the explanation text below.",
+          "After answer is revealed, show a 'Next Question →' button. On last question, show a 'See Results' button.",
+          "Results screen: large score percentage, list of all questions with correct/your answer comparison for wrong ones. Show 'Study Again' and 'Back to Topic' buttons. POST the session to <code>/api/sessions</code> on load."
+        ]
+      },
+      {
+        icon:"📊",
+        title:"Sessions Backend (Stats & Streak)",
+        tools:["Mongoose 8","MongoDB aggregation pipeline"],
+        steps:[
+          "Create <code>server/models/StudySession.js</code>. Build <code>POST /api/sessions</code> — validate and save the session document.",
+          "<code>GET /api/sessions/stats</code>: use a MongoDB aggregation pipeline to return <code>totalSessions</code> (count), <code>avgScore</code> ($avg of score), <code>totalSubjects</code> (distinct subject count via lookup). Return as a flat stats object.",
+          "<code>GET /api/sessions/streak</code>: fetch all <code>completedAt</code> dates for the user, sorted descending. Walk backwards day-by-day from today — increment the streak counter while consecutive days have at least one session. Stop when a gap is found.",
+          "<code>GET /api/sessions/heatmap</code>: return an array of <code>{ date: 'YYYY-MM-DD', count: N }</code> objects for the last 84 days (12 weeks). Use <code>$group</code> by date string and <code>$count</code>."
+        ]
+      },
+      {
+        icon:"📈",
+        title:"Dashboard Page",
+        tools:["React 18","Recharts","Custom heatmap component"],
+        steps:[
+          "Build <code>Dashboard.jsx</code>. On mount, fetch <code>/stats</code>, <code>/streak</code>, and <code>/heatmap</code> in parallel with <code>Promise.all()</code>. Show loading skeletons while fetching.",
+          "Render 4 stat cards: Total Subjects, Total Sessions, Avg Quiz Score, Current Streak. Each is a simple bordered card with a large number and a label.",
+          "Render a Recharts <code>&lt;LineChart&gt;</code> for quiz scores over time: <code>&lt;Line type='monotone' dataKey='score'/&gt;</code> inside a <code>&lt;ResponsiveContainer width='100%'&gt;</code>.",
+          "Build the activity heatmap as a custom component: a 12×7 grid of <code>&lt;div&gt;</code> squares. Map the heatmap data array into the grid — color each cell based on its count (0 = lightest, 4+ = darkest) using Tailwind opacity classes or inline styles.",
+          "Add a 'Weak Topics' list at the bottom: fetch topics sorted by average quiz score ascending. Show the 3 lowest with their scores as progress bars."
+        ]
+      }
+    ]
+  },
+  {
+    id:5, color:"#888780", lightBg:"#F1EFE8", darkBg:"#2C2C2A", lightFg:"#444441", darkFg:"#D3D1C7",
+    stepBg:"#F1EFE8", stepFg:"#444441", stepDarkBg:"#2C2C2A", stepDarkFg:"#D3D1C7",
+    label:"Phase 6", title:"Polish & Deployment", dates:"Mar 28–30 · 3 days",
+    features:[
+      {
+        icon:"💅",
+        title:"Empty States & Loading UX",
+        tools:["React 18","Tailwind CSS"],
+        steps:[
+          "Audit every list in the app. For each: add an empty state component shown when the array is empty. Example: Subjects page with no subjects → show an illustration + 'Create your first subject to get started' message with a CTA button.",
+          "Add a skeleton loader component: gray animated pulse divs that mirror the shape of the real content. Show these during every <code>loading === true</code> state instead of a spinner alone.",
+          "Wrap the entire app in a React <code>ErrorBoundary</code> class component. Show a friendly 'Something went wrong — refresh the page' UI instead of a blank white screen on unexpected errors."
+        ]
+      },
+      {
+        icon:"📱",
+        title:"Mobile Responsiveness",
+        tools:["Tailwind CSS"],
+        steps:[
+          "Add a responsive navbar: on mobile (<code>md:</code> breakpoint), collapse the nav links into a hamburger menu using a <code>useState</code> toggle.",
+          "Audit the dashboard grid and stat cards: switch from a 4-column grid to a 2-column on tablet and 1-column on mobile using Tailwind's responsive prefixes (<code>grid-cols-1 sm:grid-cols-2 lg:grid-cols-4</code>).",
+          "Test the flashcard and quiz interfaces on a 375px viewport. Ensure buttons are large enough to tap (minimum 44px height) and the card flip works on touch events."
+        ]
+      },
+      {
+        icon:"🚀",
+        title:"Backend Deployment (Render)",
+        tools:["Render","MongoDB Atlas","Cloudinary"],
+        steps:[
+          "Push the repo to GitHub. On Render, create a new <strong>Web Service</strong> pointed at your repo. Set the root directory to <code>server/</code>, build command to <code>npm install</code>, start command to <code>node server.js</code>.",
+          "Add all environment variables from <code>.env</code> into Render's dashboard (PORT, MONGODB_URI, JWT_SECRET, OPENROUTER_API_KEY, all Cloudinary keys). Never paste your <code>.env</code> file — set each key manually.",
+          "In your Express <code>cors()</code> config, update the allowed origins to include your Vercel frontend URL (you'll get it in the next step). Redeploy.",
+          "Test the deployed backend with Thunder Client using the Render URL. Confirm auth and at least one AI generation route work in production before deploying the frontend."
+        ]
+      },
+      {
+        icon:"🌐",
+        title:"Frontend Deployment (Vercel)",
+        tools:["Vercel","Vite"],
+        steps:[
+          "On Vercel, import the GitHub repo. Set the root directory to <code>client/</code>. Vercel auto-detects Vite — leave the build command as <code>npm run build</code> and output directory as <code>dist</code>.",
+          "Add the environment variable <code>VITE_API_URL</code> pointing to your live Render backend URL (e.g. <code>https://your-app.onrender.com</code>).",
+          "Deploy. Open the Vercel URL in a browser and test the full user flow: register → create subject → add topic → upload image → generate flashcards → complete a session → check dashboard."
+        ]
+      },
+      {
+        icon:"📄",
+        title:"README & Final Submission",
+        tools:["Markdown","Loom or ScreenToGif"],
+        steps:[
+          "Write the README with sections: What it does (2–3 sentences), Tech stack table, Local setup steps (clone → npm install → .env setup → npm run dev), Environment variables reference (copy from .env.example), and Known limitations.",
+          "Record a demo: open Loom or ScreenToGif and walk through the full flow in under 2 minutes — sign up, create a subject/topic, upload an image, generate flashcards, take a quiz, view the dashboard. Keep it tight.",
+          "Embed the GIF or Loom link at the top of the README. A recruiter or senior dev should understand the entire app in 10 seconds from the README alone — this is your first impression before anyone reads a line of code."
+        ]
+      }
+    ]
+  }
+];
+
+function isDark(){return window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches}
+
+function renderNav(){
+  const nav=document.getElementById('nav');
+  PHASES.forEach((p,i)=>{
+    const btn=document.createElement('button');
+    btn.className='pnav'+(i===0?' active':'');
+    btn.id='nav-'+i;
+    btn.textContent=p.label;
+    btn.onclick=()=>switchPhase(i);
+    nav.appendChild(btn);
+  });
+}
+
+function renderPhases(){
+  const dark=isDark();
+  const container=document.getElementById('phases-container');
+  PHASES.forEach((p,pi)=>{
+    const view=document.createElement('div');
+    view.className='phase-view'+(pi===0?' active':'');
+    view.id='phase-'+pi;
+
+    const hdr=document.createElement('div');
+    hdr.className='phase-header';
+    hdr.innerHTML=`<h2>${p.label}: ${p.title}</h2><p>${p.dates}</p>`;
+    view.appendChild(hdr);
+
+    p.features.forEach((f,fi)=>{
+      const card=document.createElement('div');
+      card.className='feature-card';
+      const toolTags=f.tools.map(t=>`<span class="fc-tool" style="background:${dark?p.darkBg:p.lightBg};color:${dark?p.darkFg:p.lightFg}">${t}</span>`).join('');
+      card.innerHTML=`
+        <div class="fc-head" onclick="toggleCard('fc-body-${pi}-${fi}','fc-chev-${pi}-${fi}')">
+          <div class="fc-icon" style="background:${dark?p.darkBg:p.lightBg}">${f.icon}</div>
+          <div class="fc-meta">
+            <div class="fc-title">${f.title}</div>
+            <div class="fc-tools">${toolTags}</div>
+          </div>
+          <span class="fc-chev" id="fc-chev-${pi}-${fi}">▶</span>
+        </div>
+        <div class="fc-body" id="fc-body-${pi}-${fi}">
+          <div class="steps-label">Step by step</div>
+          ${f.steps.map((s,si)=>`
+            <div class="step">
+              <div class="step-num" style="background:${dark?p.darkBg:p.lightBg};color:${dark?p.darkFg:p.lightFg}">${si+1}</div>
+              <div class="step-text">${s}</div>
+            </div>`).join('')}
+        </div>`;
+      view.appendChild(card);
+    });
+    container.appendChild(view);
+  });
+}
+
+function switchPhase(i){
+  document.querySelectorAll('.phase-view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.pnav').forEach(b=>b.classList.remove('active'));
+  document.getElementById('phase-'+i).classList.add('active');
+  const btn=document.getElementById('nav-'+i);
+  btn.classList.add('active');
+  btn.style.background=PHASES[i].color;
+}
+
+function toggleCard(bodyId,chevId){
+  const body=document.getElementById(bodyId);
+  const chev=document.getElementById(chevId);
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+renderNav();
+renderPhases();
+
+// Style active nav btn for phase 0
+document.getElementById('nav-0').style.background=PHASES[0].color;
+
+// Auto-open first feature of phase 0
+setTimeout(()=>toggleCard('fc-body-0-0','fc-chev-0-0'),100);
+</script>

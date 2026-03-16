@@ -94,8 +94,7 @@ Free models on OpenRouter typically allow **20 requests per minute** and **200 r
 
 ## Technical Requirements
 
-### Backend (Node.js + Express + MongoDB)
-
+### Backend (Next.js + Express + MongoDB)
 #### API Design
 
 Build a RESTful API with the following resource structure:
