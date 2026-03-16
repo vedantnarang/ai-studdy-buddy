@@ -122,8 +122,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# lib/ (commented to prevent ignoring project lib directories like server/lib)
+# lib64/ (commented to prevent ignoring project lib directories)
 parts/
 sdist/
 var/
@@ -183,3 +183,19 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Secrets & Credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
+secrets.json
+credentials.json
+firebase.*.json
+*.sqlite
+*.sqlite3
+database.db
