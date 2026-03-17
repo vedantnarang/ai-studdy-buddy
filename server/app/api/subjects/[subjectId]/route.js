@@ -1,8 +1,9 @@
 import { connectDB } from "@/lib/db";
-import Subject from "@/models/Subjects";
+import Subject from "@/models/Subject";
 import { getAuthUser } from "@/lib/authHelper";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
 import { subjectSchema } from "@/schemas/subject.schema";
+import { validateBody } from "@/lib/validate";
 
 export async function GET(request, { params }) {
   try {
@@ -35,21 +36,30 @@ export async function PUT(request, { params }) {
     if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
 
     const body = await request.json();
-
-    const validation = subjectSchema.safeParse(body);
-    if (!validation.success) {
-      const errorMessage = validation.error.errors[0]?.message || "Validation failed";
-      return errorResponse(errorMessage, "VALIDATION_ERROR", 400);
-    }
+    const data = validateBody(subjectSchema, body);
 
     await connectDB();
     const id = params.subjectId;
 
+    const normalizedTitle = data.title.trim().replace(/\s+/g, ' ').toLowerCase();
+
+    // Check if another subject by this exact user shares the same normalized title before updating
+    const duplicateSubject = await Subject.findOne({
+      userId: userPayload.userId,
+      normalizedTitle,
+      _id: { $ne: id } 
+    });
+
+    if (duplicateSubject) {
+      return errorResponse("Another subject with this title already exists.", "CONFLICT", 409);
+    }
+
     const updatedSubject = await Subject.findOneAndUpdate(
       { _id: id, userId: userPayload.userId },
       { 
-        title: validation.data.title, 
-        description: validation.data.description 
+        title: data.title, 
+        normalizedTitle,
+        description: data.description 
       },
       { new: true, runValidators: true } 
     );
@@ -62,6 +72,9 @@ export async function PUT(request, { params }) {
 
   } catch (error) {
     console.error("PUT subject error:", error);
+    if (error.name === "ValidationError") {
+      return errorResponse(error.message, "VALIDATION_ERROR", 400);
+    }
     return errorResponse(error.message || "Internal server error.", "SERVER_ERROR", 500);
   }
 }
