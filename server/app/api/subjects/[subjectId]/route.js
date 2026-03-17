@@ -1,5 +1,5 @@
 import { connectDB } from "@/lib/db";
-import Subject from "@/models/Subjects";
+import Subject from "@/models/Subject";
 import { getAuthUser } from "@/lib/authHelper";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
 import { subjectSchema } from "@/schemas/subject.schema";
@@ -45,10 +45,24 @@ export async function PUT(request, { params }) {
     await connectDB();
     const id = params.subjectId;
 
+    const normalizedTitle = validation.data.title.trim().replace(/\s+/g, ' ').toLowerCase();
+
+    // Check if another subject by this exact user shares the same normalized title before updating
+    const duplicateSubject = await Subject.findOne({
+      userId: userPayload.userId,
+      normalizedTitle,
+      _id: { $ne: id } 
+    });
+
+    if (duplicateSubject) {
+      return errorResponse("Another subject with this title already exists.", "CONFLICT", 409);
+    }
+
     const updatedSubject = await Subject.findOneAndUpdate(
       { _id: id, userId: userPayload.userId },
       { 
         title: validation.data.title, 
+        normalizedTitle,
         description: validation.data.description 
       },
       { new: true, runValidators: true } 

@@ -1,5 +1,5 @@
 import { connectDB } from "@/lib/db";
-import Subject from "@/models/Subjects";
+import Subject from "@/models/Subject";
 import { getAuthUser } from "@/lib/authHelper";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
 import { subjectSchema } from "@/schemas/subject.schema";
@@ -42,10 +42,22 @@ export async function POST(request) {
     }
 
     await connectDB();
+    
+    const normalizedTitle = validation.data.title.trim().replace(/\s+/g, ' ').toLowerCase();
+
+    const existingSubject = await Subject.findOne({
+      userId: userPayload.userId,
+      normalizedTitle
+    });
+
+    if (existingSubject) {
+      return errorResponse("A subject with this title already exists.", "CONFLICT", 409);
+    }
 
     const newSubject = await Subject.create({
       userId: userPayload.userId,
       title: validation.data.title,
+      normalizedTitle,
       description: validation.data.description,
     });
 
