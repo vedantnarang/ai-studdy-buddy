@@ -4,7 +4,10 @@ import Subject from "@/models/Subject";
 import { getAuthUser } from "@/lib/authHelper";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
 import { topicSchema } from "@/schemas/topic.schema";
+<<<<<<< HEAD
 import { validateBody } from "@/lib/validate";
+=======
+>>>>>>> cfdc343bd601c110de428d11da53e7728a0703bb
 
 export async function GET(request, { params }) {
   try {
@@ -12,7 +15,11 @@ export async function GET(request, { params }) {
     if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
 
     await connectDB();
+<<<<<<< HEAD
     const {subjectId} = await params;
+=======
+    const subjectId = params.subjectId;
+>>>>>>> cfdc343bd601c110de428d11da53e7728a0703bb
 
     const subject = await Subject.findOne({ _id: subjectId, userId: userPayload.userId });
     if (!subject) {
@@ -35,19 +42,37 @@ export async function POST(request, { params }) {
     if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
 
     const body = await request.json();
+<<<<<<< HEAD
     const data = validateBody(topicSchema, body);
     
     await connectDB();
     const { subjectId } = await params;
+=======
+    const validation = topicSchema.safeParse(body);
+    
+    if (!validation.success) {
+      const errorMessage = validation.error.errors[0]?.message || "Validation failed";
+      return errorResponse(errorMessage, "VALIDATION_ERROR", 400);
+    }
+
+    await connectDB();
+    const subjectId = params.subjectId;
+>>>>>>> cfdc343bd601c110de428d11da53e7728a0703bb
 
     const subject = await Subject.findOne({ _id: subjectId, userId: userPayload.userId });
     if (!subject) {
       return errorResponse("Subject not found!", "NOT_FOUND", 404);
     }
 
+<<<<<<< HEAD
     const normalizedTitle = data.title.trim().replace(/\s+/g, ' ').toLowerCase();
 
     //duplicate check
+=======
+    const normalizedTitle = validation.data.title.trim().replace(/\s+/g, ' ').toLowerCase();
+
+    // Check if duplicate topic exists inside the same subject
+>>>>>>> cfdc343bd601c110de428d11da53e7728a0703bb
     const existingTopic = await Topic.findOne({
       subjectId,
       normalizedTitle
@@ -60,7 +85,11 @@ export async function POST(request, { params }) {
     const newTopic = await Topic.create({
       subjectId,
       userId: userPayload.userId,
+<<<<<<< HEAD
       title: data.title,
+=======
+      title: validation.data.title,
+>>>>>>> cfdc343bd601c110de428d11da53e7728a0703bb
       normalizedTitle,
     });
 
@@ -68,9 +97,12 @@ export async function POST(request, { params }) {
 
   } catch (error) {
     console.error("POST topic error:", error);
+<<<<<<< HEAD
     if (error.name === "ValidationError") {
       return errorResponse(error.message, "VALIDATION_ERROR", 400);
     }
+=======
+>>>>>>> cfdc343bd601c110de428d11da53e7728a0703bb
     return errorResponse(error.message || "Internal server error.", "SERVER_ERROR", 500);
   }
 }

@@ -87,4 +87,4 @@ export async function DELETE(request, { params }) {
     console.error("DELETE topic error:", error);
     return errorResponse(error.message || "Internal server error.", "SERVER_ERROR", 500);
   }
-}
+}  
