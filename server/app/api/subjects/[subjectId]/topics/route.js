@@ -12,7 +12,7 @@ export async function GET(request, { params }) {
     if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
 
     await connectDB();
-    const subjectId = params.subjectId;
+    const {subjectId} = await params;
 
     const subject = await Subject.findOne({ _id: subjectId, userId: userPayload.userId });
     if (!subject) {
@@ -38,7 +38,7 @@ export async function POST(request, { params }) {
     const data = validateBody(topicSchema, body);
     
     await connectDB();
-    const subjectId = params.subjectId;
+    const { subjectId } = await params;
 
     const subject = await Subject.findOne({ _id: subjectId, userId: userPayload.userId });
     if (!subject) {
@@ -47,7 +47,7 @@ export async function POST(request, { params }) {
 
     const normalizedTitle = data.title.trim().replace(/\s+/g, ' ').toLowerCase();
 
-    // Check if duplicate topic exists inside the same subject
+    //duplicate check
     const existingTopic = await Topic.findOne({
       subjectId,
       normalizedTitle

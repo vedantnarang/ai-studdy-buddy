@@ -16,7 +16,7 @@ export async function PUT(request, { params }) {
     const data = validateBody(topicSchema, body);
     
     await connectDB();
-    const topicId = params.topicId;
+    const {topicId} = await params;
 
     const normalizedTitle = data.title.trim().replace(/\s+/g, ' ').toLowerCase();
 
@@ -66,7 +66,7 @@ export async function DELETE(request, { params }) {
     if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
 
     await connectDB();
-    const topicId = params.topicId;
+    const {topicId} = await params;
 
     const deletedTopic = await Topic.findOneAndDelete({ 
       _id: topicId, 

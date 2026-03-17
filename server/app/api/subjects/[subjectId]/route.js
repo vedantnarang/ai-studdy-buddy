@@ -11,12 +11,9 @@ export async function GET(request, { params }) {
     if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
 
     await connectDB();
+    const { subjectId } = await params;
 
-    // In Next.js App Router, ensure params is awaited if Next.js > 14, but we'll use it directly based on standard
-    const id = params.subjectId;
-
-    // Must filter by BOTH the subject id and the logged-in user id
-    const subject = await Subject.findOne({ _id: id, userId: userPayload.userId });
+    const subject = await Subject.findOne({ _id: subjectId, userId: userPayload.userId });
 
     if (!subject) {
       return errorResponse("Subject not found or unauthorized", "NOT_FOUND", 404);
@@ -39,11 +36,10 @@ export async function PUT(request, { params }) {
     const data = validateBody(subjectSchema, body);
 
     await connectDB();
-    const id = params.subjectId;
+    const { subjectId } = await params;
 
     const normalizedTitle = data.title.trim().replace(/\s+/g, ' ').toLowerCase();
 
-    // Check if another subject by this exact user shares the same normalized title before updating
     const duplicateSubject = await Subject.findOne({
       userId: userPayload.userId,
       normalizedTitle,
@@ -85,11 +81,11 @@ export async function DELETE(request, { params }) {
     if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
 
     await connectDB();
-    const id = params.subjectId;
+    const {subjectId} = await params;
 
     // Only delete if Both ID and User ID match
     const deletedSubject = await Subject.findOneAndDelete({ 
-      _id: id, 
+      _id: subjectId, 
       userId: userPayload.userId 
     });
 
@@ -97,7 +93,7 @@ export async function DELETE(request, { params }) {
       return errorResponse("Subject not found or unauthorized to delete.", "NOT_FOUND", 404);
     }
 
-    return successResponse({ message: "Subject deleted successfully", id }, 200);
+    return successResponse({ message: "Subject deleted successfully", subjectId }, 200);
 
   } catch (error) {
     console.error("DELETE subject error:", error);
