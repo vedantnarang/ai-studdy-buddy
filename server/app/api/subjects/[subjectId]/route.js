@@ -43,20 +43,7 @@ export async function PUT(request, { params }) {
     const duplicateSubject = await Subject.findOne({
       userId: userPayload.userId,
       normalizedTitle,
-      _id: { $ne: id } 
-    });
-
-    if (duplicateSubject) {
-      return errorResponse("Another subject with this title already exists.", "CONFLICT", 409);
-    }
-
-    const normalizedTitle = validation.data.title.trim().replace(/\s+/g, ' ').toLowerCase();
-
-    // Check if another subject by this exact user shares the same normalized title before updating
-    const duplicateSubject = await Subject.findOne({
-      userId: userPayload.userId,
-      normalizedTitle,
-      _id: { $ne: id } 
+      _id: { $ne: subjectId } 
     });
 
     if (duplicateSubject) {
@@ -64,17 +51,11 @@ export async function PUT(request, { params }) {
     }
 
     const updatedSubject = await Subject.findOneAndUpdate(
-      { _id: id, userId: userPayload.userId },
+      { _id: subjectId, userId: userPayload.userId },
       { 
-<<<<<<< HEAD
         title: data.title, 
         normalizedTitle,
         description: data.description 
-=======
-        title: validation.data.title, 
-        normalizedTitle,
-        description: validation.data.description 
->>>>>>> cfdc343bd601c110de428d11da53e7728a0703bb
       },
       { new: true, runValidators: true } 
     );
