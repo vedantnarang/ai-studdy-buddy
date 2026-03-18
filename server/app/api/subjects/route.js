@@ -39,11 +39,7 @@ export async function POST(request) {
 
     await connectDB();
     
-<<<<<<< HEAD
     const normalizedTitle = data.title.trim().replace(/\s+/g, ' ').toLowerCase();
-=======
-    const normalizedTitle = validation.data.title.trim().replace(/\s+/g, ' ').toLowerCase();
->>>>>>> cfdc343bd601c110de428d11da53e7728a0703bb
 
     const existingSubject = await Subject.findOne({
       userId: userPayload.userId,
@@ -56,15 +52,9 @@ export async function POST(request) {
 
     const newSubject = await Subject.create({
       userId: userPayload.userId,
-<<<<<<< HEAD
       title: data.title,
       normalizedTitle,
       description: data.description,
-=======
-      title: validation.data.title,
-      normalizedTitle,
-      description: validation.data.description,
->>>>>>> cfdc343bd601c110de428d11da53e7728a0703bb
     });
 
     return successResponse(newSubject, 201);
