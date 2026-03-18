@@ -1,17 +1,30 @@
 import { z } from 'zod';
 
 export const FlashcardSchema = z.object({
-  flashcards: z.array(z.object({
-    front: z.string().min(1, 'Front text is required'),
-    back: z.string().min(1, 'Back text is required')
-  }))
+  flashcards: z.array(
+    z.object({
+      question: z.string().describe("A clear, specific question testing one concept"),
+      answer: z.string().describe("A concise but complete answer"),
+    })
+  ),
 });
 
 export const QuizSchema = z.object({
-  quiz: z.array(z.object({
-    question: z.string().min(1, 'Question is required'),
-    options: z.array(z.string()).length(4, 'Quizzes must have exactly 4 options'),
-    answer: z.string().min(1, 'Correct answer is required'),
-    explanation: z.string().min(1, 'Explanation is required')
-  }))
+  questions: z.array(
+    z.object({
+      question: z.string().describe("A clear question testing understanding"),
+      options: z
+        .array(z.string())
+        .length(4)
+        .describe("Exactly 4 answer choices"),
+      correctIndex: z
+        .number()
+        .min(0)
+        .max(3)
+        .describe("Index of the correct answer (0-3)"),
+      explanation: z
+        .string()
+        .describe("Why the correct answer is right"),
+    })
+  ),
 });

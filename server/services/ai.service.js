@@ -6,16 +6,26 @@ const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-const PRIMARY_MODEL = 'google/gemini-2.0-flash-001';
-const FALLBACK_MODEL = 'anthropic/claude-3-haiku';
+// Primary: Gemma 3 is great but often rate-limited or fails with structured JSON
+const PRIMARY_MODEL = process.env.OPENROUTER_PRIMARY_MODEL || 'google/gemma-3-27b-it:free';
+// Fallback: Mistral Small 3.1 24B — excellent at structured JSON and less congested on free tier
+const FALLBACK_MODEL = process.env.OPENROUTER_FALLBACK_MODEL || 'mistralai/mistral-small-3.1-24b-instruct:free';
 
+function getModel(useFallback = false) {
+  const modelId = useFallback ? FALLBACK_MODEL : PRIMARY_MODEL;
+  return openrouter(modelId);
+}
+
+/**
+ * Robust fallback helper that retries on ANY failure with the secondary model.
+ */
 async function withFallback(aiCall) {
   try {
-    return await aiCall(PRIMARY_MODEL);
+    return await aiCall(getModel(false));
   } catch (error) {
-    console.warn(`Primary model (${PRIMARY_MODEL}) failed, trying fallback (${FALLBACK_MODEL})...`, error.message);
+    console.warn(`Attempt with ${PRIMARY_MODEL} failed, trying fallback (${FALLBACK_MODEL})...`, error.message);
     try {
-      return await aiCall(FALLBACK_MODEL);
+      return await aiCall(getModel(true));
     } catch (fallbackError) {
       console.error(`Both models failed:`, fallbackError.message);
       throw fallbackError;
@@ -23,91 +33,127 @@ async function withFallback(aiCall) {
   }
 }
 
-export async function generateSummary(text) {
-  return withFallback((model) => 
+// --- Text-based generation ---
+
+export async function generateSummary(notes) {
+  const { text } = await withFallback((model) => 
     generateText({
-      model: openrouter(model),
-      system: 'You are an educational assistant. Summarize the following study material concisely while retaining key information.',
-      prompt: text,
+      model,
+      prompt: `You are an expert tutor. Summarize the following study notes in a clear, structured format with key concepts highlighted. Highlight important terms in bold.\n\nNotes:\n${notes}`,
     })
-  ).then(res => res.text);
+  );
+  return text;
 }
 
-export async function generateFlashcards(text) {
-  const result = await withFallback((model) => 
+export async function generateFlashcards(notes, count = 10) {
+  const { object } = await withFallback((model) => 
     generateObject({
-      model: openrouter(model),
+      model,
       schema: FlashcardSchema,
-      system: 'Generate educational flashcards from the provided text. Focus on key terms, concepts, and definitions.',
-      prompt: text,
+      prompt: `You are an expert tutor. Generate exactly ${count} flashcards from these study notes. Return your response as a JSON object matching this schema. Each flashcard should test one specific concept.\n\nNotes:\n${notes}`,
     })
   );
-  return result.object.flashcards;
+  return object.flashcards;
 }
 
-export async function generateQuiz(text) {
-  const result = await withFallback((model) => 
+export async function generateQuiz(notes, count = 5) {
+  const { object } = await withFallback((model) => 
     generateObject({
-      model: openrouter(model),
+      model,
       schema: QuizSchema,
-      system: 'Generate a multiple-choice quiz from the provided text. Each question must have 4 options and a clear explanation.',
-      prompt: text,
+      prompt: `You are an expert tutor. Generate exactly ${count} multiple-choice questions from these study notes. Return your response as a JSON object matching this schema. Make the wrong options plausible but clearly incorrect to someone who studied the material.\n\nNotes:\n${notes}`,
     })
   );
-  return result.object.quiz;
+  return object.questions;
 }
 
-export async function extractTextFromImage(imageUrl) {
-  return withFallback((model) => 
+// --- Image-based generation ---
+
+export async function extractTextFromImage(imageBuffer, mimeType) {
+  const { text } = await withFallback((model) => 
     generateText({
-      model: openrouter(model),
+      model,
       messages: [
         {
           role: 'user',
           content: [
-            { type: 'text', text: 'Extract all study-related text from this image. Return just the raw text.' },
-            { type: 'image', image: imageUrl },
+            {
+              type: 'text',
+              text: `You are a precise text extraction assistant. Look at this image and:
+1. Extract ALL text content you can see, including handwritten text.
+2. Organize it logically (preserve headings, bullet points, numbered lists).
+3. If you see a diagram or chart, describe what it shows in clear text.
+4. If handwriting is unclear, make your best guess and put uncertain words in [brackets].
+
+Respond with ONLY the extracted and organized text. No commentary.`,
+            },
+            { type: 'image', image: imageBuffer, mimeType },
           ],
         },
       ],
     })
-  ).then(res => res.text);
+  );
+  return text;
 }
 
-export async function generateFlashcardsFromImage(imageUrl) {
-  const result = await withFallback((model) => 
+export async function extractTextFromImageUrl(imageUrl) {
+  const { text } = await withFallback((model) => 
+    generateText({
+      model,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Extract all text from this image. Organize logically.' },
+            { type: 'image', image: new URL(imageUrl) },
+          ],
+        },
+      ],
+    })
+  );
+  return text;
+}
+
+export async function generateFlashcardsFromImage(imageBuffer, mimeType, count = 10) {
+  const { object } = await withFallback((model) => 
     generateObject({
-      model: openrouter(model),
+      model,
       schema: FlashcardSchema,
       messages: [
         {
           role: 'user',
           content: [
-            { type: 'text', text: 'Generate flashcards based on the contents of this image.' },
-            { type: 'image', image: imageUrl },
+            {
+              type: 'text',
+              text: `You are an expert tutor. Look at this image of study material and generate exactly ${count} flashcards as a JSON object matching this schema. Each flashcard should test one specific concept from the image.`,
+            },
+            { type: 'image', image: imageBuffer, mimeType },
           ],
         },
       ],
     })
   );
-  return result.object.flashcards;
+  return object.flashcards;
 }
 
-export async function generateQuizFromImage(imageUrl) {
-  const result = await withFallback((model) => 
+export async function generateQuizFromImage(imageBuffer, mimeType, count = 5) {
+  const { object } = await withFallback((model) => 
     generateObject({
-      model: openrouter(model),
+      model,
       schema: QuizSchema,
       messages: [
         {
           role: 'user',
           content: [
-            { type: 'text', text: 'Generate a multiple-choice quiz based on the contents of this image.' },
-            { type: 'image', image: imageUrl },
+            {
+              type: 'text',
+              text: `Look at this image of study material and generate exactly ${count} multiple-choice questions as a JSON object matching this schema.`,
+            },
+            { type: 'image', image: imageBuffer, mimeType },
           ],
         },
       ],
     })
   );
-  return result.object.quiz;
+  return object.questions;
 }
