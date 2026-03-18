@@ -3,6 +3,9 @@ import { getAuthUser } from "@/lib/authHelper";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
 import Topic from "@/models/Topic";
 
+// 1. Import the modern class from pdf-parse
+import { PDFParse } from "pdf-parse"; 
+
 export async function POST(request, { params }) {
   try {
     const { topicId } = await params;
@@ -14,8 +17,8 @@ export async function POST(request, { params }) {
 
     await connectDB();
 
-    // Verify topic exists and belongs to the user
-    const topic = await Topic.findOne({ _id: topicId, userId: user.id });
+    const topic = await Topic.findOne({ _id: topicId, userId: user.userId });
+    
     if (!topic) {
       return errorResponse("Topic not found or unauthorized", "NOT_FOUND", 404);
     }
@@ -27,7 +30,6 @@ export async function POST(request, { params }) {
       return errorResponse("No file uploaded", "BAD_REQUEST", 400);
     }
 
-    // Validation
     const allowedTypes = ['application/pdf', 'text/plain'];
     if (!allowedTypes.includes(file.type)) {
       return errorResponse("Invalid file type. Only PDF and Text files are allowed.", "INVALID_TYPE", 400);
@@ -37,17 +39,39 @@ export async function POST(request, { params }) {
       return errorResponse("File too large. Max size is 5MB.", "FILE_TOO_LARGE", 400);
     }
 
-    // Convert to Buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // TODO: Implement PDF/Text extraction logic here in the future
+    let extractedText = "";
+    console.log(file.type)
+    if (file.type === 'application/pdf') {
+      try {
+        const parser = new PDFParse({ data: buffer });
+        console.log(parser)
+        const data = await parser.getText(); 
+        extractedText = data.text;
+        
+      
+        await parser.destroy(); 
+      } catch (pdfError) {
+        console.error("PDF parsing error:", pdfError);
+        return errorResponse("Unable to read PDF text. The file might be corrupted or password-protected.", "PARSE_FAILED", 400);
+      }
+    } else {
+      extractedText = buffer.toString('utf-8');
+    }
+
+    const newNotes = topic.notes 
+      ? `${topic.notes}\n\n--- Extracted from ${file.name} ---\n\n${extractedText}` 
+      : extractedText;
+
+    topic.notes = newNotes;
+    await topic.save();
     
     return successResponse({
-      message: "File uploaded successfully",
+      message: "File uploaded and notes updated successfully",
       fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type
+      extractedPreview: extractedText.substring(0, 100) + "..."
     });
 
   } catch (error) {
