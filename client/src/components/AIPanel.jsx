@@ -1,15 +1,14 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import api from '../services/api';
 
 const AIPanel = ({ topic, onGenerated }) => {
   const [loadingType, setLoadingType] = useState(null); // 'summary', 'flashcards', 'quiz'
-  const [error, setError] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
 
   if (!topic) return null;
 
   const handleGenerate = async (type) => {
-    setError(null);
     // Check if data already exists to warn user
     const hasData = Array.isArray(topic[type]) ? topic[type].length > 0 : !!topic[type];
     
@@ -23,7 +22,6 @@ const AIPanel = ({ topic, onGenerated }) => {
   const executeGeneration = async (type) => {
     setConfirmAction(null);
     setLoadingType(type);
-    setError(null);
 
     try {
       const endpoint = `/topics/${topic._id}/generate/${type}`;
@@ -31,14 +29,16 @@ const AIPanel = ({ topic, onGenerated }) => {
       const res = await api.post(endpoint, { forceRegenerate: true });
       
       const updatedData = res.data.data || res.data.topic || res.data;
+      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} generated successfully!`);
+      
       if (onGenerated) {
         onGenerated(updatedData);
       }
     } catch (err) {
       if (err.response?.status === 429) {
-         setError("Rate limit exceeded. Please try again later.");
+         toast.error("AI is taking a breather, try again in 30s");
       } else {
-         setError(err.response?.data?.message || err.message || `Failed to generate ${type}`);
+         toast.error(err.response?.data?.message || err.message || `Failed to generate ${type}`);
       }
     } finally {
       setLoadingType(null);
@@ -51,12 +51,6 @@ const AIPanel = ({ topic, onGenerated }) => {
         <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
         AI Study Features
       </h3>
-
-      {error && (
-        <div className="p-3 text-sm text-red-600 bg-red-100 dark:bg-red-900/40 dark:text-red-300 rounded-lg border border-red-200 dark:border-red-900/50">
-          {error}
-        </div>
-      )}
 
       {/* Confirmation Modal Inline */}
       {confirmAction && (

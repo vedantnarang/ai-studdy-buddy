@@ -1,15 +1,24 @@
-import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTopic } from '../hooks/useTopic';
+import { useFlashcardSession } from '../hooks/useFlashcardSession';
 
 const FlashcardStudy = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { topic, loading, error } = useTopic(id);
-  
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [knownCount, setKnownCount] = useState(0);
+  const flashcards = topic?.flashcards || [];
+
+  const {
+    currentCard,
+    currentIndex,
+    totalCards,
+    isFlipped,
+    correctCount,
+    isFinished,
+    flipCard,
+    nextCard,
+    resetSession
+  } = useFlashcardSession(id, flashcards);
 
   if (loading) {
     return (
@@ -29,8 +38,6 @@ const FlashcardStudy = () => {
     );
   }
 
-  const flashcards = topic.flashcards || [];
-
   if (flashcards.length === 0) {
     return (
       <div className="text-center p-12 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 m-8">
@@ -43,21 +50,31 @@ const FlashcardStudy = () => {
     );
   }
 
-  const currentCard = flashcards[currentIndex];
-
-  const nextCard = (isKnown) => {
-    if (isKnown) setKnownCount(prev => prev + 1);
-    setIsFlipped(false);
-    setTimeout(() => {
-      if (currentIndex < flashcards.length - 1) {
-        setCurrentIndex(prev => prev + 1);
-      } else {
-        // End of deck routing
-        alert(`You finished the deck! You knew ${isKnown ? knownCount + 1 : knownCount} out of ${flashcards.length}.`);
-        navigate(`/topic/${id}`);
-      }
-    }, 150);
-  };
+  if (isFinished) {
+    const percentage = Math.round((correctCount / totalCards) * 100);
+    return (
+      <div className="max-w-2xl mx-auto mt-20 text-center bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 animate-in fade-in">
+         <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">Deck Complete!</h2>
+         <div className={`text-6xl font-black mb-8 ${percentage >= 80 ? 'text-green-500' : percentage >= 60 ? 'text-yellow-500' : 'text-red-500'}`}>
+            {percentage}%
+         </div>
+         <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 font-medium">
+            You knew {correctCount} out of {totalCards} cards.
+         </p>
+         <div className="flex justify-center gap-4">
+           <button 
+              onClick={resetSession} 
+              className="px-6 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-medium rounded-xl transition-colors"
+            >
+              Study Again
+           </button>
+           <Link to={`/topic/${id}`} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm">
+              Return to Topic
+           </Link>
+         </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col items-center py-8 px-4">
@@ -67,7 +84,7 @@ const FlashcardStudy = () => {
             &larr; Exit Study Mode
          </Link>
          <div className="text-sm font-semibold text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-4 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm">
-           Card {currentIndex + 1} of {flashcards.length}
+           Card {currentIndex + 1} of {totalCards}
          </div>
       </div>
 
@@ -75,7 +92,7 @@ const FlashcardStudy = () => {
       <div className="w-full max-w-2xl bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-12 shadow-inner overflow-hidden">
         <div 
           className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-          style={{ width: `${((currentIndex) / flashcards.length) * 100}%` }}
+          style={{ width: `${((currentIndex) / totalCards) * 100}%` }}
         ></div>
       </div>
 
@@ -83,7 +100,7 @@ const FlashcardStudy = () => {
       <div 
         className="w-full max-w-2xl aspect-3/2 cursor-pointer group mb-12"
         style={{ perspective: '1000px' }}
-        onClick={() => setIsFlipped(!isFlipped)}
+        onClick={flipCard}
       >
         <div 
           className="relative w-full h-full transition-transform duration-500 shadow-md hover:shadow-xl rounded-2xl"
@@ -100,7 +117,7 @@ const FlashcardStudy = () => {
           >
             <span className="absolute top-5 left-5 text-xs font-bold tracking-wider text-blue-500 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-md uppercase">Question</span>
             <h2 className="text-3xl sm:text-4xl text-center font-medium text-gray-900 dark:text-white leading-relaxed px-4">
-              {currentCard.front}
+              {currentCard?.front}
             </h2>
             <p className="absolute bottom-5 right-5 text-sm text-gray-400 dark:text-gray-500 flex items-center gap-1 font-medium bg-gray-50 dark:bg-gray-900 px-3 py-1.5 rounded-md border border-gray-100 dark:border-gray-700">
               Tap to flip
@@ -115,7 +132,7 @@ const FlashcardStudy = () => {
           >
             <span className="absolute top-5 left-5 text-xs font-bold tracking-wider text-green-600 bg-green-100 dark:bg-green-900/50 dark:text-green-400 px-3 py-1 rounded-md uppercase">Answer</span>
             <p className="text-2xl text-center text-gray-800 dark:text-gray-200 leading-relaxed max-h-full overflow-y-auto w-full px-4 scrollbar-thin">
-              {currentCard.back}
+              {currentCard?.back}
             </p>
           </div>
 

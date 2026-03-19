@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import api from '../services/api';
 
 export const useSubjects = () => {
@@ -32,8 +33,10 @@ export const useSubjects = () => {
       const newSubject = res.data.data || res.data.subject || res.data;
       
       setSubjects((prev) => [...prev, newSubject]);
+      toast.success('Subject created successfully!');
       return { success: true, data: newSubject };
     } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to create subject');
       return { success: false, error: err.response?.data?.message || err.message };
     }
   };
@@ -42,8 +45,10 @@ export const useSubjects = () => {
     try {
       await api.delete(`/subjects/${id}`);
       setSubjects((prev) => prev.filter(sub => sub._id !== id));
+      toast.success('Subject deleted permanently.');
       return { success: true };
     } catch (err) {
+       toast.error(err.response?.data?.message || err.message || 'Failed to delete subject');
        return { success: false, error: err.response?.data?.message || err.message };
     }
   };

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import api from '../services/api';
 
 export const useTopic = (topicId) => {
@@ -33,8 +34,10 @@ export const useTopic = (topicId) => {
       const res = await api.put(`/topics/${topicId}`, { content });
       const updatedTopic = res.data.data || res.data.topic || res.data;
       setTopic(updatedTopic);
+      toast.success('Notes autosaved', { position: 'bottom-right', duration: 2000 });
       return { success: true, data: updatedTopic };
     } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to save notes');
       return { success: false, error: err.response?.data?.message || err.message };
     }
   };
@@ -42,8 +45,21 @@ export const useTopic = (topicId) => {
   const createTopic = async (subjectId, title) => {
      try {
          const res = await api.post(`/subjects/${subjectId}/topics`, { title });
+         toast.success('Topic created successfully!');
          return { success: true, data: res.data.data || res.data.topic || res.data };
      } catch (err) {
+         toast.error(err.response?.data?.message || err.message || 'Failed to create topic');
+         return { success: false, error: err.response?.data?.message || err.message };
+     }
+  };
+
+  const deleteTopic = async (topicId) => {
+     try {
+         await api.delete(`/topics/${topicId}`);
+         toast.success('Topic permanently deleted.');
+         return { success: true };
+     } catch (err) {
+         toast.error(err.response?.data?.message || err.message || 'Failed to delete topic');
          return { success: false, error: err.response?.data?.message || err.message };
      }
   };
@@ -54,7 +70,8 @@ export const useTopic = (topicId) => {
     loading, 
     error, 
     updateNotes, 
-    createTopic, 
+    createTopic,
+    deleteTopic, 
     fetchTopic 
   };
 };

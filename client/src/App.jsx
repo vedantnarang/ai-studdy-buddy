@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
@@ -10,11 +11,29 @@ import SubjectDetail from './pages/SubjectDetail';
 import TopicDetail from './pages/TopicDetail';
 import FlashcardStudy from './pages/FlashcardStudy';
 import QuizStudy from './pages/QuizStudy';
+import NotFound from './pages/NotFound';
 import './App.css';
 
 function App() {
   return (
     <Router>
+      <Toaster 
+        position="top-center" 
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+            theme: {
+              primary: 'green',
+              secondary: 'black',
+            },
+          },
+        }}
+      />
       <AuthProvider>
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -34,6 +53,9 @@ function App() {
                  <Route path="/topic/:id" element={<TopicDetail />} />
                  <Route path="/topic/:id/flashcards" element={<FlashcardStudy />} />
                  <Route path="/topic/:id/quiz" element={<QuizStudy />} />
+                 
+                 {/* Fallback 404 Route */}
+                 <Route path="*" element={<NotFound />} />
              </Route>
           </Route>
         </Routes>

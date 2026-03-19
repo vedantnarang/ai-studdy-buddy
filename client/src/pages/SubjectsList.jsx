@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSubjects } from '../hooks/useSubjects';
+import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 
 const SubjectsList = () => {
   const { subjects, loading, error, createSubject, deleteSubject } = useSubjects();
@@ -10,6 +11,10 @@ const SubjectsList = () => {
   const [newColor, setNewColor] = useState('#3B82F6'); 
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState('');
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [subjectToDelete, setSubjectToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -24,17 +29,30 @@ const SubjectsList = () => {
       setNewTitle('');
       setNewDescription('');
     } else {
-      setCreateError(result.error || 'Failed to create subject');
+      setCreateError(result.error);
     }
     setCreateLoading(false);
   };
 
-  const handleDelete = async (e, id) => {
-    e.preventDefault(); 
-    if(window.confirm('Are you sure you want to delete this subject? All topics inside will be lost.')) {
-      await deleteSubject(id);
-    }
-  }
+  const handleDeleteClick = (e, id) => {
+    e.preventDefault();
+    setSubjectToDelete(id);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!subjectToDelete) return;
+    setIsDeleting(true);
+    await deleteSubject(subjectToDelete);
+    setIsDeleting(false);
+    setDeleteModalOpen(false);
+    setSubjectToDelete(null);
+  };
+
+  const cancelDelete = () => {
+    setDeleteModalOpen(false);
+    setSubjectToDelete(null);
+  };
 
   if (loading) {
     return (
@@ -45,7 +63,7 @@ const SubjectsList = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6 relative">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Subjects</h1>
         <button 
@@ -153,7 +171,7 @@ const SubjectsList = () => {
                   {subject.title ? subject.title.charAt(0).toUpperCase() : 'S'}
                 </div>
                 <button 
-                  onClick={(e) => handleDelete(e, subject._id)}
+                  onClick={(e) => handleDeleteClick(e, subject._id)}
                   className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
                   title="Delete Subject"
                 >
@@ -170,6 +188,15 @@ const SubjectsList = () => {
           ))}
         </div>
       )}
+
+      <DeleteConfirmationModal 
+        isOpen={deleteModalOpen}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+        title="Delete Subject?"
+        message="Are you completely sure you want to delete this subject? All associated topics, notes, AI generations, and flashcards will be permanently erased. This cannot be undone."
+      />
     </div>
   );
 };
