@@ -11,7 +11,7 @@ export function validateBody(schema, body) {
   const validation = schema.safeParse(body);
   
   if (!validation.success) {
-    const errorMessage = validation.error.errors[0]?.message || "Validation failed";
+    const errorMessage = validation.error?.errors?.[0]?.message || "Validation failed";
     const error = new Error(errorMessage);
     error.name = "ValidationError";
     error.status = 400;

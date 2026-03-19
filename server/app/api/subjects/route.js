@@ -55,6 +55,7 @@ export async function POST(request) {
       title: data.title,
       normalizedTitle,
       description: data.description,
+      color: data.color,
     });
 
     return successResponse(newSubject, 201);

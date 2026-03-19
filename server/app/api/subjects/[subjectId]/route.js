@@ -55,7 +55,8 @@ export async function PUT(request, { params }) {
       { 
         title: data.title, 
         normalizedTitle,
-        description: data.description 
+        description: data.description,
+        color: data.color,
       },
       { new: true, runValidators: true } 
     );

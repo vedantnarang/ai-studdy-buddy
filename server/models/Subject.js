@@ -20,6 +20,11 @@ const subjectSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    color: {
+      type: String,
+      default: '#6366f1',
+      match: [/^#([0-9A-Fa-f]{6})$/, 'Color must be a valid hex code (e.g. #6366f1)'],
+    },
   },
   {
     timestamps: true,
