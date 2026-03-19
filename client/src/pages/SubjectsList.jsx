@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSubjects } from '../hooks/useSubjects';
+import { useAnalytics } from '../hooks/useAnalytics';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 
 const SubjectsList = () => {
   const { subjects, loading, error, createSubject, deleteSubject } = useSubjects();
+  const { streak, weakTopics, loading: analyticsLoading } = useAnalytics();
   const [isCreating, setIsCreating] = useState(false);
+  // ... existing state
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newColor, setNewColor] = useState('#3B82F6'); 
@@ -64,6 +67,54 @@ const SubjectsList = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 relative">
+      {/* Analytics Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Streak Card */}
+        <div className="bg-linear-to-br from-orange-400 to-red-500 rounded-2xl p-6 text-white shadow-lg overflow-hidden relative">
+          <div className="relative z-10">
+            <h3 className="text-lg font-medium opacity-90">Study Streak</h3>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-5xl font-bold">{streak}</span>
+              <span className="text-xl">days</span>
+            </div>
+            <p className="mt-2 text-sm opacity-80">
+              {streak > 0 ? "You're on fire! Keep it up." : "Start a session today to begin your streak!"}
+            </p>
+          </div>
+          <svg className="absolute right-[-10px] bottom-[-10px] w-32 h-32 opacity-20 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C12 2 12 2 12 2C12 2 12 2 12 2L12 2.00001C9.61 2.00001 7.63 3.65 7.12 5.88C5.23 6.7 4 8.65 4 10.89C4 13.92 6.46 16.38 9.5 16.38C9.64 16.38 9.77 16.38 9.91 16.37C11.1 17.38 12 18 12 18C12 18 12.9 17.38 14.09 16.37C14.23 16.38 14.36 16.38 14.5 16.38C17.54 16.38 20 13.92 20 10.89C20 8.65 18.77 6.7 16.88 5.88C16.37 3.65 14.39 2 12 2ZM11 14H9.5C7.57 14 6 12.43 6 10.5C6 9.4 6.55 8.41 7.42 7.82L8.09 7.37L8 6.56C8 4.6 9.35 3 11 3C11.66 3 12.28 3.23 12.77 3.65L13.5 4.27L14.23 3.65C14.72 3.23 15.34 3 16 3C17.65 3 19 4.6 19 6.56L18.91 7.37L19.58 7.82C20.45 8.41 21 9.4 21 10.5C21 12.43 19.43 14 17.5 14H16V14.5C16 15.22 15.65 15.86 15.11 16.27C14.15 17 12 18.5 12 18.5C12 18.5 9.85 17 8.89 16.27C8.35 15.86 8 15.22 8 14.5V14H11V14.5C11 15.22 10.65 15.86 10.11 16.27L11 14Z" /></svg>
+        </div>
+
+        {/* Weak Topics Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            Focus Areas
+          </h3>
+          {weakTopics.length > 0 ? (
+            <ul className="space-y-3">
+              {weakTopics.map(topic => (
+                <li key={topic.id} className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate max-w-[150px]">{topic.title}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-24 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-red-500" 
+                        style={{ width: `${topic.avgScore}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-xs font-semibold text-red-500">{Math.round(topic.avgScore)}%</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+              {analyticsLoading ? 'Loading stats...' : 'No weak spots detected. Doing great!'}
+            </p>
+          )}
+        </div>
+      </div>
+
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Subjects</h1>
         <button 

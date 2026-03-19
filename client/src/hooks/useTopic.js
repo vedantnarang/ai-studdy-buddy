@@ -31,7 +31,7 @@ export const useTopic = (topicId) => {
     if (!topicId) return { success: false, error: "No topic ID provided" };
     
     try {
-      const res = await api.put(`/topics/${topicId}`, { content });
+      const res = await api.put(`/topics/${topicId}/notes`, { notes: content });
       const updatedTopic = res.data.data || res.data.topic || res.data;
       setTopic(updatedTopic);
       toast.success('Notes autosaved', { position: 'bottom-right', duration: 2000 });

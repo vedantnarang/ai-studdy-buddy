@@ -1,5 +1,6 @@
 import { connectDB } from "@/lib/db";
 import Session from "@/models/Session";
+import Topic from "@/models/Topic";
 import { getAuthUser } from "@/lib/authHelper";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
 
@@ -12,7 +13,9 @@ export async function GET(request) {
     }
 
     await connectDB();
-    const sessions = await Session.find({ userId: userPayload.userId }).sort({ createdAt: -1 });
+    const sessions = await Session.find({ userId: userPayload.userId })
+      .populate('topicId', 'title')
+      .sort({ createdAt: -1 });
     return successResponse(sessions, 200);
 
   } catch (error) {

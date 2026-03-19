@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTopic } from '../hooks/useTopic';
+import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import api from '../services/api';
 
 const SubjectDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { createTopic } = useTopic(null); // Just binding the create method
+  const { createTopic, deleteTopic } = useTopic(null); // Binding methods
   
   const [subject, setSubject] = useState(null);
   const [topics, setTopics] = useState([]);
@@ -16,6 +17,10 @@ const SubjectDetail = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [createLoading, setCreateLoading] = useState(false);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [topicToDelete, setTopicToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchSubjectData = useCallback(async () => {
     try {
@@ -49,10 +54,27 @@ const SubjectDetail = () => {
       setTopics((prev) => [...prev, result.data]);
       setIsCreating(false);
       setNewTitle('');
-    } else {
-      alert(result.error);
     }
     setCreateLoading(false);
+  };
+
+  const handleDeleteClick = (e, topicId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setTopicToDelete(topicId);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!topicToDelete) return;
+    setIsDeleting(true);
+    const result = await deleteTopic(topicToDelete);
+    if (result.success) {
+      setTopics((prev) => prev.filter(t => t._id !== topicToDelete));
+    }
+    setIsDeleting(false);
+    setDeleteModalOpen(false);
+    setTopicToDelete(null);
   };
 
   if (loading) {
@@ -76,7 +98,7 @@ const SubjectDetail = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="max-w-5xl mx-auto space-y-8 relative">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -161,22 +183,42 @@ const SubjectDetail = () => {
           <ul className="divide-y divide-gray-100 dark:divide-gray-700">
             {topics.map((topic) => (
               <li key={topic._id} className="group hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors">
-                <Link to={`/topic/${topic._id}`} className="flex items-center justify-between px-6 py-4">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between px-6 py-4">
+                  <Link to={`/topic/${topic._id}`} className="flex items-center gap-3 flex-1">
                     <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                     <span className="font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                       {topic.title}
                     </span>
+                  </Link>
+                  <div className="flex items-center gap-4">
+                    <button 
+                      onClick={(e) => handleDeleteClick(e, topic._id)}
+                      className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1"
+                      title="Delete Topic"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                    <Link to={`/topic/${topic._id}`}>
+                      <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
                   </div>
-                  <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
+                </div>
               </li>
             ))}
           </ul>
         )}
       </div>
+
+      <DeleteConfirmationModal 
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+        title="Delete Topic?"
+        message="This will permanently delete this topic and all associated notes, flashcards, and quizzes. This action cannot be undone."
+      />
     </div>
   );
 };

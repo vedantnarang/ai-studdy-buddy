@@ -7,6 +7,31 @@ import { successResponse, errorResponse } from "@/lib/apiResponse";
 import { topicSchema } from "@/schemas/topic.schema";
 import { validateBody } from "@/lib/validate";
 
+export async function GET(request, { params }) {
+  try {
+    const userPayload = await getAuthUser(request);
+    if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
+
+    await connectDB();
+    const { topicId } = await params;
+
+    const topic = await Topic.findOne({ 
+      _id: topicId, 
+      userId: userPayload.userId 
+    });
+
+    if (!topic) {
+      return errorResponse("Topic not found", "NOT_FOUND", 404);
+    }
+
+    return successResponse(topic, 200);
+
+  } catch (error) {
+    console.error("GET topic error:", error);
+    return errorResponse(error.message || "Internal server error.", "SERVER_ERROR", 500);
+  }
+}
+
 export async function PUT(request, { params }) {
   try {
     const userPayload = await getAuthUser(request);
