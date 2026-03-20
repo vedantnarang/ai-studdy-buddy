@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 
 const AIPanel = ({ topic, onGenerated }) => {
   const [loadingType, setLoadingType] = useState(null); // 'summary', 'flashcards', 'quiz'
   const [confirmAction, setConfirmAction] = useState(null);
+  const navigate = useNavigate();
 
   if (!topic) return null;
 
@@ -13,6 +15,10 @@ const AIPanel = ({ topic, onGenerated }) => {
     const hasData = Array.isArray(topic[type]) ? topic[type].length > 0 : !!topic[type];
     
     if (hasData) {
+      if (type === 'flashcards') {
+        navigate(`/subject/${topic.subjectId}/flashcards`);
+        return;
+      }
       setConfirmAction(type);
       return;
     }
@@ -33,6 +39,10 @@ const AIPanel = ({ topic, onGenerated }) => {
       
       if (onGenerated) {
         onGenerated(updatedData);
+      }
+
+      if (type === 'flashcards') {
+        navigate(`/subject/${topic.subjectId}/flashcards`);
       }
     } catch (err) {
       if (err.response?.status === 429) {
@@ -90,7 +100,9 @@ const AIPanel = ({ topic, onGenerated }) => {
           onClick={() => handleGenerate('flashcards')}
           className="flex items-center justify-between px-4 py-3 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-lg transition-colors border border-purple-100 dark:border-purple-900/50 disabled:opacity-50"
         >
-          <span className="font-medium">Generate Flashcards</span>
+          <span className="font-medium">
+             {(Array.isArray(topic.flashcards) && topic.flashcards.length > 0) ? 'Show Flashcards' : 'Generate Flashcards'}
+          </span>
           {loadingType === 'flashcards' && <span className="animate-spin text-purple-500 text-xl">↻</span>}
         </button>
 

@@ -153,7 +153,7 @@ const TopicDetail = () => {
               onChange={(e) => setNotes(e.target.value)}
               onBlur={handleBlur}
               placeholder="Start typing your notes here. They will save automatically..."
-              className="flex-1 w-full bg-transparent resize-none border-0 focus:ring-0 p-0 text-gray-800 dark:text-gray-200 placeholder-gray-400 outline-none"
+              className="flex-1 min-h-0 w-full bg-transparent resize-none border-0 focus:ring-0 p-2 text-gray-800 dark:text-gray-200 placeholder-gray-400 outline-none leading-relaxed"
             />
           </div>
 
