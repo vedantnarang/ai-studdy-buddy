@@ -26,6 +26,10 @@ const AIPanel = ({ topic, onGenerated }) => {
         navigate(`/topic/${topic._id}/quiz`);
         return;
       }
+      if (type === 'summary') {
+        navigate(`/topic/${topic._id}/summary`);
+        return;
+      }
       setConfirmAction(type);
       return;
     }
@@ -45,6 +49,14 @@ const AIPanel = ({ topic, onGenerated }) => {
       
       if (onGenerated) {
         onGenerated(updatedData);
+      }
+
+      if (type === 'flashcards') {
+        navigate(`/subject/${topic.subjectId}/flashcards`);
+      } else if (type === 'quiz') {
+        navigate(`/topic/${topic._id}/quiz`);
+      } else if (type === 'summary') {
+        navigate(`/topic/${topic._id}/summary`);
       }
     } catch (err) {
       if (err.response?.status === 429) {

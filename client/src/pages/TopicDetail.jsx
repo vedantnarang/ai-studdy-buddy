@@ -145,44 +145,6 @@ const TopicDetail = () => {
         {/* Content Area: Markdown Summary & Source Notes */}
         <article className="col-span-12 lg:col-span-8 flex flex-col gap-8">
           
-          {/* AI SUMMARY RENDERED INLINE (Replaces SummaryModal) */}
-          {topic.summary && (
-            <div className="bg-surface-container-lowest dark:bg-gray-800 rounded-3xl p-8 lg:p-14 shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-gray-100 dark:border-gray-700 animate-in fade-in slide-in-from-bottom-4">
-              <div className="flex items-center gap-3 mb-8 border-b border-gray-100 dark:border-gray-700 pb-6">
-                 <span className="material-symbols-outlined text-tertiary text-3xl">auto_awesome</span>
-                 <h2 className="text-2xl font-bold font-headline text-on-surface dark:text-gray-100">AI Deep Dive</h2>
-              </div>
-              
-              <div className="prose prose-slate dark:prose-invert max-w-none prose-lg font-body text-on-surface prose-headings:font-headline prose-headings:font-bold prose-a:text-primary prose-code:bg-surface-container-high prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    code({node, inline, className, children, ...props}) {
-                      const match = /language-(\w+)/.exec(className || '');
-                      return !inline && match ? (
-                        <SyntaxHighlighter
-                          style={vscDarkPlus}
-                          language={match[1]}
-                          PreTag="div"
-                          className="rounded-xl mt-6 mb-6 overflow-hidden"
-                          {...props}
-                        >
-                          {String(children).replace(/\n$/, '')}
-                        </SyntaxHighlighter>
-                      ) : (
-                        <code className={className} {...props}>
-                          {children}
-                        </code>
-                      )
-                    }
-                  }}
-                >
-                  {topic.summary}
-                </ReactMarkdown>
-              </div>
-            </div>
-          )}
-
           {/* User's Original Notes Section (Re-styled for the grid) */}
           <div className="bg-surface-container-lowest dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8">
             <h3 className="text-xl font-bold font-headline text-on-surface dark:text-white mb-6">Topic Notes</h3>

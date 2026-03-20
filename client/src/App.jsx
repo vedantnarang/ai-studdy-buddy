@@ -9,6 +9,7 @@ import Register from './pages/Register';
 import SubjectsList from './pages/SubjectsList';
 import SubjectDetail from './pages/SubjectDetail';
 import TopicDetail from './pages/TopicDetail';
+import TopicSummary from './pages/TopicSummary';
 import FlashcardStudy from './pages/FlashcardStudy';
 import SubjectFlashcardReview from './pages/SubjectFlashcardReview';
 import QuizStudy from './pages/QuizStudy';
@@ -53,6 +54,7 @@ function App() {
                  <Route path="/subject/:id" element={<SubjectDetail />} />
                  <Route path="/subject/:id/flashcards" element={<SubjectFlashcardReview />} />
                  <Route path="/topic/:id" element={<TopicDetail />} />
+                 <Route path="/topic/:id/summary" element={<TopicSummary />} />
                  <Route path="/topic/:id/flashcards" element={<FlashcardStudy />} />
                  <Route path="/topic/:id/quiz" element={<QuizStudy />} />
                  
