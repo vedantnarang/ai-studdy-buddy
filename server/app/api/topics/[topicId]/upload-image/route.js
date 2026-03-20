@@ -5,6 +5,8 @@ import Topic from "@/models/Topic";
 import { uploadImage } from "@/services/cloudinary.service";
 
 export async function POST(request, { params }) {
+    const userPayload= await getAuthUser(request);
+    if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
   try {
     const { topicId } = await params;
     const user = await getAuthUser(request);

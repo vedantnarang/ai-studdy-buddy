@@ -40,11 +40,17 @@ export async function POST(request, { params }) {
       return successResponse({ flashcards: existingCards, cached: true });
     }
 
-    if (!topic.notes || topic.notes.trim().length === 0) {
-      return errorResponse("Topic has no notes to generate from", "NO_CONTENT", 400);
+    // Combine typed notes + all source document texts
+    const allNotes = [
+      topic.notes,
+      ...(topic.sourceDocuments || []).map(d => d.extractedText)
+    ].filter(text => text && text.trim().length > 0).join('\n\n');
+
+    if (!allNotes || allNotes.trim().length === 0) {
+      return errorResponse("Topic has no notes or documents to generate from", "NO_CONTENT", 400);
     }
 
-    const flashcards = await generateFlashcards(topic.notes);
+    const flashcards = await generateFlashcards(allNotes);
 
     if (forceRegenerate) {
       await Flashcard.deleteMany({ topicId, userId: userPayload.userId });

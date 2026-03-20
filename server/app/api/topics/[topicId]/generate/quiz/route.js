@@ -41,11 +41,17 @@ export async function POST(request, { params }) {
       return successResponse({ quiz: existingQuiz, cached: true });
     }
 
-    if (!topic.notes || topic.notes.trim().length === 0) {
-      return errorResponse("Topic has no notes to generate from", "NO_CONTENT", 400);
+    // Combine typed notes + all source document texts
+    const allNotes = [
+      topic.notes,
+      ...(topic.sourceDocuments || []).map(d => d.extractedText)
+    ].filter(text => text && text.trim().length > 0).join('\n\n');
+
+    if (!allNotes || allNotes.trim().length === 0) {
+      return errorResponse("Topic has no notes or documents to generate from", "NO_CONTENT", 400);
     }
 
-    const questions = await generateQuiz(topic.notes);
+    const questions = await generateQuiz(allNotes);
 
     // If regenerating, delete old quiz first
     if (forceRegenerate) {

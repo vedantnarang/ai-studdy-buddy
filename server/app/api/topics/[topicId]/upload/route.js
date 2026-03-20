@@ -2,77 +2,98 @@ import { connectDB } from "@/lib/db";
 import { getAuthUser } from "@/lib/authHelper";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
 import Topic from "@/models/Topic";
-
-// 1. Import the modern class from pdf-parse
 import { PDFParse } from "pdf-parse"; 
 
 export async function POST(request, { params }) {
   try {
-    const { topicId } = await params;
-    const user = await getAuthUser(request);
+    const userPayload = await getAuthUser(request);
+    if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
 
-    if (!user) {
-      return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
-    }
+    const { topicId } = await params;
 
     await connectDB();
 
-    const topic = await Topic.findOne({ _id: topicId, userId: user.userId });
-    
+    const topic = await Topic.findOne({ _id: topicId, userId: userPayload.userId });
     if (!topic) {
       return errorResponse("Topic not found or unauthorized", "NOT_FOUND", 404);
     }
 
     const formData = await request.formData();
-    const file = formData.get('file');
+    const files = formData.getAll('files');
 
-    if (!file) {
-      return errorResponse("No file uploaded", "BAD_REQUEST", 400);
+    if (!files || files.length === 0) {
+      return errorResponse("No files uploaded", "BAD_REQUEST", 400);
     }
 
     const allowedTypes = ['application/pdf', 'text/plain'];
-    if (!allowedTypes.includes(file.type)) {
-      return errorResponse("Invalid file type. Only PDF and Text files are allowed.", "INVALID_TYPE", 400);
-    }
+    const maxSize = 5 * 1024 * 1024; // 5MB
 
-    if (file.size > 5 * 1024 * 1024) {
-      return errorResponse("File too large. Max size is 5MB.", "FILE_TOO_LARGE", 400);
-    }
+    const results = [];
+    const newDocuments = [];
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    let extractedText = "";
-    console.log(file.type)
-    if (file.type === 'application/pdf') {
-      try {
-        const parser = new PDFParse({ data: buffer });
-        console.log(parser)
-        const data = await parser.getText(); 
-        extractedText = data.text;
-        
-      
-        await parser.destroy(); 
-      } catch (pdfError) {
-        console.error("PDF parsing error:", pdfError);
-        return errorResponse("Unable to read PDF text. The file might be corrupted or password-protected.", "PARSE_FAILED", 400);
+    for (const file of files) {
+      // Validate type
+      if (!allowedTypes.includes(file.type)) {
+        results.push({ fileName: file.name, success: false, error: "Invalid file type. Only PDF and TXT files are allowed." });
+        continue;
       }
-    } else {
-      extractedText = buffer.toString('utf-8');
+
+      // Validate size
+      if (file.size > maxSize) {
+        results.push({ fileName: file.name, success: false, error: "File too large. Max size is 5MB." });
+        continue;
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      let extractedText = "";
+      const fileType = file.type === 'application/pdf' ? 'pdf' : 'txt';
+
+      if (file.type === 'application/pdf') {
+        try {
+          const parser = new PDFParse({ data: buffer });
+          const data = await parser.getText(); 
+          extractedText = data.text;
+          await parser.destroy(); 
+        } catch (pdfError) {
+          console.error(`PDF parsing error for ${file.name}:`, pdfError);
+          results.push({ fileName: file.name, success: false, error: "Unable to read PDF text. The file might be corrupted or password-protected." });
+          continue;
+        }
+      } else {
+        extractedText = buffer.toString('utf-8');
+      }
+
+      newDocuments.push({
+        fileName: file.name,
+        fileType,
+        extractedText,
+      });
+
+      results.push({ 
+        fileName: file.name, 
+        success: true, 
+        extractedPreview: extractedText.substring(0, 100) + (extractedText.length > 100 ? "..." : "")
+      });
     }
 
-    const newNotes = topic.notes 
-      ? `${topic.notes}\n\n--- Extracted from ${file.name} ---\n\n${extractedText}` 
-      : extractedText;
+    // Push all successfully parsed documents into sourceDocuments
+    if (newDocuments.length > 0) {
+      await Topic.findOneAndUpdate(
+        { _id: topicId, userId: userPayload.userId },
+        { $push: { sourceDocuments: { $each: newDocuments } } }
+      );
+    }
 
-    topic.notes = newNotes;
-    await topic.save();
-    
+    // Re-fetch the updated topic to return it
+    const updatedTopic = await Topic.findById(topicId);
+
     return successResponse({
-      message: "File uploaded and notes updated successfully",
-      fileName: file.name,
-      extractedPreview: extractedText.substring(0, 100) + "..."
-    });
+      message: `${newDocuments.length} of ${files.length} file(s) processed successfully`,
+      results,
+      topic: updatedTopic,
+    }, 201);
 
   } catch (error) {
     console.error("Upload error:", error);

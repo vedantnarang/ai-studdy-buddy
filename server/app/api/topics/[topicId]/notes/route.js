@@ -5,16 +5,17 @@ import { successResponse, errorResponse } from "@/lib/apiResponse";
 import { notesSchema } from "@/schemas/topic.schema";
 import { validateBody } from "@/lib/validate";
 
-export async function PUT(request, { params }) {
-  try {
-    const userPayload = await getAuthUser(request);
+export async function PUT(request, context) {
+    const userPayload= await getAuthUser(request);
     if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
+  try {
+    const { topicId } = await context.params;
+    const userPayload=await getAuthUser(request);
 
     const body = await request.json();
     const data = validateBody(notesSchema, body);
 
     await connectDB();
-    const {topicId} = await params;
 
     const updatedTopic = await Topic.findOneAndUpdate(
       { _id: topicId, userId: userPayload.userId },

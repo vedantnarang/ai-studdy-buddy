@@ -3,29 +3,35 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTopic } from '../hooks/useTopic';
 import { useDebounce } from '../hooks/useDebounce';
 import DocumentUpload from '../components/DocumentUpload';
+import DocumentModal from '../components/DocumentModal';
 import AIPanel from '../components/AIPanel';
 
 const TopicDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { topic, setTopic, loading, error, updateNotes } = useTopic(id);
+  const { 
+    topic, setTopic, loading, error, 
+    updateNotes, uploadDocuments, updateDocumentText, deleteDocument 
+  } = useTopic(id);
   
   const [notes, setNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState(null);
+  const [savingDoc, setSavingDoc] = useState(false);
   
   // Initialize local notes state when topic loads
   useEffect(() => {
-    if (topic && typeof topic.content === 'string') {
-      setNotes(topic.content);
+    if (topic && typeof topic.notes === 'string') {
+      setNotes(topic.notes);
     }
-  }, [topic?.content]);
+  }, [topic?.notes]);
 
   // Handle Debounce Auto-Save
   const debouncedNotes = useDebounce(notes, 2000);
   
   useEffect(() => {
-    // Prevent saving if notes haven't actually changed from DB or if we don't have a topic loaded
-    if (!topic || debouncedNotes === topic.content) return;
+    if (!topic || debouncedNotes === topic.notes) return;
     
     const saveChanges = async () => {
       setIsSaving(true);
@@ -35,19 +41,36 @@ const TopicDetail = () => {
     
     saveChanges();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedNotes]); // Omit dependencies to avoid circular loops on topic state 
+  }, [debouncedNotes]);
 
   const handleBlur = async () => {
-    if (!topic || notes === topic.content) return;
+    if (!topic || notes === topic.notes) return;
     setIsSaving(true);
     await updateNotes(notes);
     setIsSaving(false);
   };
 
-  const handleExtraction = (extractedText) => {
-    const newNotes = notes ? `${notes}\n\n${extractedText}` : extractedText;
-    setNotes(newNotes);
-    // Debounce will pick up the Notes state change and trigger auto-save!
+  const handleUpload = async (files) => {
+    setUploading(true);
+    const result = await uploadDocuments(files);
+    setUploading(false);
+    return result;
+  };
+
+  const handleDocumentSave = async (documentId, extractedText) => {
+    setSavingDoc(true);
+    const result = await updateDocumentText(documentId, extractedText);
+    setSavingDoc(false);
+    if (result.success) {
+      // Update the selectedDoc to reflect the new text
+      setSelectedDoc(prev => prev ? { ...prev, extractedText } : null);
+    }
+  };
+
+  const handleDocumentDelete = async (e, documentId) => {
+    e.stopPropagation();
+    if (!window.confirm('Remove this document? This cannot be undone.')) return;
+    await deleteDocument(documentId);
   };
 
   const handleAIGenerated = (updatedTopic) => {
@@ -74,6 +97,8 @@ const TopicDetail = () => {
     );
   }
 
+  const sourceDocuments = topic.sourceDocuments || [];
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
@@ -88,7 +113,7 @@ const TopicDetail = () => {
           <div className="flex items-center gap-3">
              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{topic.title}</h1>
              {isSaving && <span className="text-sm px-2 py-0.5 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400 rounded-full animate-pulse transition-opacity">Saving...</span>}
-             {!isSaving && notes === topic.content && <span className="text-sm px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 rounded-full transition-opacity">Saved</span>}
+             {!isSaving && notes === topic.notes && <span className="text-sm px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 rounded-full transition-opacity">Saved</span>}
           </div>
         </div>
 
@@ -114,11 +139,12 @@ const TopicDetail = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Notes & Document Upload */}
+        {/* Left Column: Notes, Source Documents & Upload */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col h-[500px]">
+          {/* My Notes */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col h-[400px]">
             <div className="flex justify-between items-center mb-4">
-               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Study Notes</h3>
+               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">My Notes</h3>
             </div>
             <textarea
               value={notes}
@@ -128,8 +154,54 @@ const TopicDetail = () => {
               className="flex-1 w-full bg-transparent resize-none border-0 focus:ring-0 p-0 text-gray-800 dark:text-gray-200 placeholder-gray-400 outline-none"
             />
           </div>
+
+          {/* Source Documents Section */}
+          {sourceDocuments.length > 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                Source Documents
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({sourceDocuments.length})</span>
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {sourceDocuments.map((doc) => (
+                  <div
+                    key={doc._id}
+                    onClick={() => setSelectedDoc(doc)}
+                    className="group relative flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+                  >
+                    {/* PDF/TXT icon */}
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                      doc.fileType === 'pdf' 
+                        ? 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400' 
+                        : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400'
+                    }`}>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{doc.fileName}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {doc.fileType.toUpperCase()} • {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+                      </p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 line-clamp-2">
+                        {doc.extractedText ? doc.extractedText.substring(0, 80) + (doc.extractedText.length > 80 ? '...' : '') : 'No text extracted'}
+                      </p>
+                    </div>
+                    {/* Delete button */}
+                    <button
+                      onClick={(e) => handleDocumentDelete(e, doc._id)}
+                      className="opacity-0 group-hover:opacity-100 absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                      title="Remove document"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           
-          <DocumentUpload topicId={topic._id} onExtractionSuccess={handleExtraction} />
+          <DocumentUpload onUpload={handleUpload} uploading={uploading} />
         </div>
 
         {/* Right Column: AI Panel & Summary */}
@@ -149,6 +221,14 @@ const TopicDetail = () => {
           )}
         </div>
       </div>
+
+      {/* Document Modal */}
+      <DocumentModal
+        document={selectedDoc}
+        onClose={() => setSelectedDoc(null)}
+        onSave={handleDocumentSave}
+        saving={savingDoc}
+      />
     </div>
   );
 };

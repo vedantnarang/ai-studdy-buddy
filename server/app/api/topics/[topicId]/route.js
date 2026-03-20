@@ -7,13 +7,15 @@ import { successResponse, errorResponse } from "@/lib/apiResponse";
 import { topicSchema } from "@/schemas/topic.schema";
 import { validateBody } from "@/lib/validate";
 
-export async function GET(request, { params }) {
+export async function GET(request, context) {
   try {
+    const { topicId } = await context.params;
+    console.log(`[GET] Fetching topic: ${topicId}`);
+    
     const userPayload = await getAuthUser(request);
     if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
 
     await connectDB();
-    const { topicId } = await params;
 
     const topic = await Topic.findOne({ 
       _id: topicId, 
@@ -32,8 +34,9 @@ export async function GET(request, { params }) {
   }
 }
 
-export async function PUT(request, { params }) {
+export async function PUT(request, context) {
   try {
+    const { topicId } = await context.params;
     const userPayload = await getAuthUser(request);
     if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
 
@@ -41,11 +44,9 @@ export async function PUT(request, { params }) {
     const data = validateBody(topicSchema, body);
     
     await connectDB();
-    const {topicId} = await params;
 
     const normalizedTitle = data.title.trim().replace(/\s+/g, ' ').toLowerCase();
 
-    // To verify duplication securely on update across subjects, extract current topic's subjectId
     const currentTopic = await Topic.findOne({ _id: topicId, userId: userPayload.userId });
     if (!currentTopic) {
       return errorResponse("Topic not found or unauthorized to update", "NOT_FOUND", 404);
@@ -85,13 +86,13 @@ export async function PUT(request, { params }) {
   }
 }
 
-export async function DELETE(request, { params }) {
+export async function DELETE(request, context) {
   try {
+    const { topicId } = await context.params;
     const userPayload = await getAuthUser(request);
     if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
 
     await connectDB();
-    const {topicId} = await params;
 
     const deletedTopic = await Topic.findOneAndDelete({ 
       _id: topicId, 
@@ -102,7 +103,6 @@ export async function DELETE(request, { params }) {
       return errorResponse("Topic not found or unauthorized to delete", "NOT_FOUND", 404);
     }
 
-    // Cascade delete associated flashcards and quizzes securely
     await Flashcard.deleteMany({ topicId, userId: userPayload.userId });
     await Quiz.deleteMany({ topicId, userId: userPayload.userId });
 

@@ -18,6 +18,10 @@ export async function GET(request) {
 
     const subjects = await Subject.find({ userId: userPayload.userId });
 
+    if(subjects.length===0){
+        return errorResponse("No subjects found", "NOT_FOUND", 404);
+    }
+
     return successResponse(subjects, 200);
 
   } catch (error) {

@@ -64,14 +64,76 @@ export const useTopic = (topicId) => {
      }
   };
 
+  const uploadDocuments = async (files) => {
+    if (!topicId || !files || files.length === 0) return { success: false, error: "No files provided" };
+
+    try {
+      const formData = new FormData();
+      for (const file of files) {
+        formData.append('files', file);
+      }
+
+      const res = await api.post(`/topics/${topicId}/upload`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      const updatedTopic = res.data.data?.topic || res.data.topic || res.data.data;
+      if (updatedTopic) {
+        setTopic(updatedTopic);
+      } else {
+        // Re-fetch if we didn't get the topic back from the response
+        await fetchTopic();
+      }
+
+      toast.success(res.data.data?.message || 'Documents uploaded successfully!');
+      return { success: true, data: res.data.data };
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to upload documents');
+      return { success: false, error: err.response?.data?.message || err.message };
+    }
+  };
+
+  const updateDocumentText = async (documentId, extractedText) => {
+    if (!topicId) return { success: false, error: "No topic ID" };
+
+    try {
+      const res = await api.put(`/topics/${topicId}/documents/${documentId}`, { extractedText });
+      const updatedTopic = res.data.data || res.data;
+      setTopic(updatedTopic);
+      toast.success('Document text updated!', { duration: 2000 });
+      return { success: true, data: updatedTopic };
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to update document');
+      return { success: false, error: err.response?.data?.message || err.message };
+    }
+  };
+
+  const deleteDocument = async (documentId) => {
+    if (!topicId) return { success: false, error: "No topic ID" };
+
+    try {
+      const res = await api.delete(`/topics/${topicId}/documents/${documentId}`);
+      const updatedTopic = res.data.data || res.data;
+      setTopic(updatedTopic);
+      toast.success('Document removed.');
+      return { success: true };
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to delete document');
+      return { success: false, error: err.response?.data?.message || err.message };
+    }
+  };
+
   return { 
     topic, 
-    setTopic, // exported so UI can optimistically mutate local state if needed
+    setTopic,
     loading, 
     error, 
     updateNotes, 
     createTopic,
     deleteTopic, 
-    fetchTopic 
+    fetchTopic,
+    uploadDocuments,
+    updateDocumentText,
+    deleteDocument,
   };
 };

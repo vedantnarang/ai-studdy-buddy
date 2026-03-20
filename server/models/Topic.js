@@ -19,6 +19,26 @@ const sourceImageSchema = new mongoose.Schema({
   },
 }, { _id: false });
 
+const sourceDocumentSchema = new mongoose.Schema({
+  fileName: {
+    type: String,
+    required: true,
+  },
+  fileType: {
+    type: String,
+    enum: ['pdf', 'txt'],
+    required: true,
+  },
+  extractedText: {
+    type: String,
+    default: '',
+  },
+  uploadedAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
 const topicSchema = new mongoose.Schema(
   {
     subjectId: {
@@ -49,6 +69,7 @@ const topicSchema = new mongoose.Schema(
       default: null,
     },
     sourceImages: [sourceImageSchema],
+    sourceDocuments: [sourceDocumentSchema],
     generationStatus: {
       hasFlashcards: {
         type: Boolean,
