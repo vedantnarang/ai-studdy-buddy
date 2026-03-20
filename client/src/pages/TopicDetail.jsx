@@ -180,8 +180,11 @@ const TopicDetail = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{doc.fileName}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1.5">
                         {doc.fileType.toUpperCase()} • {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+                        {doc.extractionMethod === 'ocr' && (
+                          <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 rounded">OCR</span>
+                        )}
                       </p>
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 line-clamp-2">
                         {doc.extractedText ? doc.extractedText.substring(0, 80) + (doc.extractedText.length > 80 ? '...' : '') : 'No text extracted'}

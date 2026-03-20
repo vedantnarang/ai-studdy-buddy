@@ -33,6 +33,11 @@ const sourceDocumentSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  extractionMethod: {
+    type: String,
+    enum: ['text-parse', 'ocr'],
+    default: 'text-parse',
+  },
   uploadedAt: {
     type: Date,
     default: Date.now,

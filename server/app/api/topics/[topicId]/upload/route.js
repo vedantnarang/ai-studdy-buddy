@@ -3,6 +3,18 @@ import { getAuthUser } from "@/lib/authHelper";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
 import Topic from "@/models/Topic";
 import { PDFParse } from "pdf-parse"; 
+import { extractTextFromScannedPDF } from "@/services/ocr.service";
+
+// Check if pdf-parse output is meaningful text or just page markers / garbage
+function isTextMeaningful(text) {
+  if (!text) return false;
+  // Strip out common pdf-parse page markers like "-- 1 of 2 --"
+  const cleaned = text
+    .replace(/--\s*\d+\s*of\s*\d+\s*--/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return cleaned.length >= 50;
+}
 
 export async function POST(request, { params }) {
   try {
@@ -48,20 +60,40 @@ export async function POST(request, { params }) {
       const buffer = Buffer.from(arrayBuffer);
 
       let extractedText = "";
+      let extractionMethod = "text-parse";
       const fileType = file.type === 'application/pdf' ? 'pdf' : 'txt';
 
       if (file.type === 'application/pdf') {
+        // Step 1: Try pdf-parse (fast, local, free)
         try {
           const parser = new PDFParse({ data: buffer });
           const data = await parser.getText(); 
           extractedText = data.text;
           await parser.destroy(); 
         } catch (pdfError) {
-          console.error(`PDF parsing error for ${file.name}:`, pdfError);
-          results.push({ fileName: file.name, success: false, error: "Unable to read PDF text. The file might be corrupted or password-protected." });
-          continue;
+          console.log(`pdf-parse failed for ${file.name}, will try OCR:`, pdfError.message);
+          extractedText = "";
+        }
+
+        // Step 2: If pdf-parse returned garbage/empty, fall back to OCR
+        if (!isTextMeaningful(extractedText)) {
+          console.log(`Text from pdf-parse not meaningful for "${file.name}", falling back to OCR...`);
+          try {
+            extractedText = await extractTextFromScannedPDF(buffer, file.name);
+            extractionMethod = "ocr";
+            console.log(`OCR succeeded for "${file.name}" — extracted ${extractedText.length} chars`);
+          } catch (ocrError) {
+            console.error(`OCR also failed for ${file.name}:`, ocrError.message);
+            results.push({ 
+              fileName: file.name, 
+              success: false, 
+              error: `Could not extract text. pdf-parse found no text, and OCR failed: ${ocrError.message}` 
+            });
+            continue;
+          }
         }
       } else {
+        // Plain text file
         extractedText = buffer.toString('utf-8');
       }
 
@@ -69,11 +101,13 @@ export async function POST(request, { params }) {
         fileName: file.name,
         fileType,
         extractedText,
+        extractionMethod,
       });
 
       results.push({ 
         fileName: file.name, 
         success: true, 
+        extractionMethod,
         extractedPreview: extractedText.substring(0, 100) + (extractedText.length > 100 ? "..." : "")
       });
     }
