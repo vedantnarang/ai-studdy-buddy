@@ -23,6 +23,10 @@ export async function POST(request, { params }) {
     await connectDB();
     const { topicId } = await params;
 
+    if (!/^[0-9a-fA-F]{24}$/.test(topicId)) {
+      return errorResponse("Invalid topic ID", "VALIDATION_ERROR", 400);
+    }
+
     const topic = await Topic.findOne({ _id: topicId, userId: userPayload.userId });
     if (!topic) return errorResponse("Topic not found", "NOT_FOUND", 404);
 

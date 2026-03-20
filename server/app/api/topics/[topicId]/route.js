@@ -41,33 +41,53 @@ export async function PUT(request, context) {
     if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
 
     const body = await request.json();
-    const data = validateBody(topicSchema, body);
     
-    await connectDB();
+    // We expect some subset of title, notes, summary
+    // validateBody with topicSchema might fail if it strictly expects title. 
+    // Let's manually validate or use a partial schema if we want.
+    // Assuming topicSchema requires title, let's bypass strict validation if title isn't sent,
+    // OR we just build the update object dynamically.
+    if (Object.keys(body).length === 0) {
+        return errorResponse("No fields provided to update", "BAD_REQUEST", 400);
+    }
 
-    const normalizedTitle = data.title.trim().replace(/\s+/g, ' ').toLowerCase();
+    await connectDB();
 
     const currentTopic = await Topic.findOne({ _id: topicId, userId: userPayload.userId });
     if (!currentTopic) {
       return errorResponse("Topic not found or unauthorized to update", "NOT_FOUND", 404);
     }
 
-    const duplicateTopic = await Topic.findOne({
-      subjectId: currentTopic.subjectId,
-      normalizedTitle,
-      _id: { $ne: topicId } 
-    });
+    const updateData = {};
 
-    if (duplicateTopic) {
-      return errorResponse("Another topic with this title already exists in this subject.", "CONFLICT", 409);
+    if (body.title !== undefined) {
+      if (!body.title.trim()) {
+        return errorResponse("Title cannot be empty", "VALIDATION_ERROR", 400);
+      }
+      const normalizedTitle = body.title.trim().replace(/\s+/g, ' ').toLowerCase();
+      const duplicateTopic = await Topic.findOne({
+        subjectId: currentTopic.subjectId,
+        normalizedTitle,
+        _id: { $ne: topicId } 
+      });
+      if (duplicateTopic) {
+        return errorResponse("Another topic with this title already exists in this subject.", "CONFLICT", 409);
+      }
+      updateData.title = body.title;
+      updateData.normalizedTitle = normalizedTitle;
+    }
+
+    if (body.notes !== undefined) {
+      updateData.notes = body.notes;
+    }
+
+    if (body.summary !== undefined) {
+      updateData.summary = body.summary;
     }
 
     const updatedTopic = await Topic.findOneAndUpdate(
       { _id: topicId, userId: userPayload.userId },
-      { 
-        title: data.title,
-        normalizedTitle
-      },
+      { $set: updateData },
       { new: true, runValidators: true }
     );
 

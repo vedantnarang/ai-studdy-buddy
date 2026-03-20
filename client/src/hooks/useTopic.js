@@ -31,7 +31,8 @@ export const useTopic = (topicId) => {
     if (!topicId) return { success: false, error: "No topic ID provided" };
     
     try {
-      const res = await api.put(`/topics/${topicId}/notes`, { notes: content });
+      // Use the generic topic PUT route
+      const res = await api.put(`/topics/${topicId}`, { notes: content });
       const updatedTopic = res.data.data || res.data.topic || res.data;
       setTopic(updatedTopic);
       toast.success('Notes autosaved', { position: 'bottom-right', duration: 2000 });
@@ -41,7 +42,22 @@ export const useTopic = (topicId) => {
       return { success: false, error: err.response?.data?.message || err.message };
     }
   };
-  
+
+  const updateSummaryText = async (newSummary) => {
+    if (!topicId) return { success: false, error: "No topic ID provided" };
+    
+    try {
+      // Use the same generic topic PUT route
+      const res = await api.put(`/topics/${topicId}`, { summary: newSummary });
+      const updatedTopic = res.data.data || res.data.topic || res.data;
+      setTopic(updatedTopic);
+      toast.success('Summary saved successfully!');
+      return { success: true, data: updatedTopic };
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to save summary');
+      return { success: false, error: err.response?.data?.message || err.message };
+    }
+  };
   const createTopic = async (subjectId, title) => {
      try {
          const res = await api.post(`/subjects/${subjectId}/topics`, { title });
@@ -129,6 +145,7 @@ export const useTopic = (topicId) => {
     loading, 
     error, 
     updateNotes, 
+    updateSummaryText,
     createTopic,
     deleteTopic, 
     fetchTopic,
