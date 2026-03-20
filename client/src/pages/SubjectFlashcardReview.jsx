@@ -83,7 +83,7 @@ const SubjectFlashcardReview = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-12 pb-24 animate-in fade-in zoom-in-95 duration-500">
+    <div className="max-w-7xl mx-auto space-y-12 pb-24 animate-in fade-in zoom-in-95 duration-500">
       
       {/* Stitch Design Context Header */}
       <header className="mb-12 flex flex-col items-center md:items-start text-center md:text-left">
@@ -158,7 +158,7 @@ const SubjectFlashcardReview = () => {
                   )}
 
                   {/* Flashcard Grid Layout */}
-                  <div className={`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 lg:gap-12 transition-opacity duration-300 ${isTopicRegenerating ? 'opacity-30 pointer-events-none' : ''}`}>
+                  <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 lg:gap-10 transition-opacity duration-300 ${isTopicRegenerating ? 'opacity-30 pointer-events-none' : ''}`}>
                     {group.flashcards.map((card, index) => (
                       <div className="relative animate-in slide-in-from-bottom-8 fade-in" style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }} key={card._id}>
                         <FlashcardItem 

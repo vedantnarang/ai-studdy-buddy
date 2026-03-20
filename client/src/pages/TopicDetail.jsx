@@ -101,8 +101,8 @@ const TopicDetail = () => {
   }
 
   const sourceDocuments = topic.sourceDocuments || [];
-  const hasFlashcards = Array.isArray(topic.flashcards) && topic.flashcards.length > 0;
-  const hasQuiz = Array.isArray(topic.quiz) && topic.quiz.length > 0;
+  const hasFlashcards = topic.generationStatus?.hasFlashcards === true;
+  const hasQuiz = topic.generationStatus?.hasQuiz === true;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-24 animate-in fade-in duration-300">
@@ -209,20 +209,21 @@ const TopicDetail = () => {
 
         {/* Secondary Focus Area: Empty States & Quick Actions */}
         <aside className="col-span-12 lg:col-span-4 flex flex-col gap-6">
-          
-          {/* Flashcards Status Box */}
+                   {/* Flashcards Status Box */}
           {!hasFlashcards ? (
-            <div className="bg-[#f0f4f7]/50 dark:bg-gray-800/50 rounded-3xl p-8 text-center border-2 border-dashed border-[#a9b4b9]/30 dark:border-gray-700">
-              <div className="w-16 h-16 rounded-full bg-[#e1e9ee] dark:bg-gray-700 flex items-center justify-center mx-auto mb-4">
-                <span className="material-symbols-outlined text-[#717c82] dark:text-gray-400 text-3xl">style</span>
+            <div 
+              onClick={() => document.querySelector('button[title="Flashcards"]')?.parentElement?.click()}
+              className="bg-[#f0f4f7]/50 dark:bg-gray-800/50 rounded-3xl p-8 text-center border-2 border-dashed border-[#a9b4b9]/30 dark:border-gray-700 cursor-pointer hover:border-primary/50 transition-colors group"
+            >
+              <div className="w-16 h-16 rounded-full bg-[#e1e9ee] dark:bg-gray-700 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined text-[#717c82] dark:text-gray-400 text-3xl group-hover:text-primary">style</span>
               </div>
               <h4 className="font-headline font-bold text-on-surface dark:text-gray-200 mb-2 text-lg">No flashcards yet</h4>
               <p className="text-sm text-on-surface-variant dark:text-gray-400 mb-6 leading-relaxed">Let the AI analyze your summary and create active recall cards for you.</p>
               <button 
-                onClick={() => document.querySelector('button[title="Flashcards"]')?.click()} // It's better to trigger the main AI Panel logic if possible, but navigating to it makes sense. Since the AIPanel handles it, we can just trigger window scrolling, OR we can rely on the user to click the big button above. 
-                className="w-full py-3 bg-white dark:bg-gray-700 text-primary dark:text-primary-fixed border border-primary/20 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-primary hover:text-white dark:hover:bg-primary transition-all duration-300 pointer-events-none opacity-50"
+                className="w-full py-3 bg-white dark:bg-gray-700 text-primary dark:text-primary-fixed border border-primary/20 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-primary hover:text-white dark:hover:bg-primary transition-all duration-300 relative overflow-hidden"
               >
-                Use Top Panels ^
+                Generate Flashcards
               </button>
             </div>
           ) : (
@@ -243,16 +244,19 @@ const TopicDetail = () => {
 
           {/* Quiz Status Box (Replaces Topic Mastery) */}
           {!hasQuiz ? (
-            <div className="bg-[#f0f4f7]/50 dark:bg-gray-800/50 rounded-3xl p-8 text-center border-2 border-dashed border-[#a9b4b9]/30 dark:border-gray-700">
-               <div className="w-16 h-16 rounded-full bg-[#e1e9ee] dark:bg-gray-700 flex items-center justify-center mx-auto mb-4">
-                 <span className="material-symbols-outlined text-[#717c82] dark:text-gray-400 text-3xl">quiz</span>
+            <div 
+              onClick={() => document.querySelector('button[title="Quiz"]')?.parentElement?.click()}
+              className="bg-[#f0f4f7]/50 dark:bg-gray-800/50 rounded-3xl p-8 text-center border-2 border-dashed border-[#a9b4b9]/30 dark:border-gray-700 cursor-pointer hover:border-[#22C55E]/50 transition-colors group"
+            >
+               <div className="w-16 h-16 rounded-full bg-[#e1e9ee] dark:bg-gray-700 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                 <span className="material-symbols-outlined text-[#717c82] dark:text-gray-400 text-3xl group-hover:text-[#22C55E]">quiz</span>
                </div>
                <h4 className="font-headline font-bold text-on-surface dark:text-gray-200 mb-2 text-lg">No Practice Quiz</h4>
                <p className="text-sm text-on-surface-variant dark:text-gray-400 mb-6 leading-relaxed">Evaluate your understanding by generating an interactive AI quiz.</p>
                <button 
-                className="w-full py-3 bg-white dark:bg-gray-700 text-[#22C55E] border border-[#22C55E]/20 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-300 pointer-events-none opacity-50"
+                className="w-full py-3 bg-white dark:bg-gray-800 text-[#22C55E] border border-[#22C55E]/20 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-300 hover:bg-[#22C55E] hover:text-white dark:hover:bg-[#22C55E]"
               >
-                Use Top Panels ^
+                Generate Quiz
               </button>
             </div>
           ) : (
