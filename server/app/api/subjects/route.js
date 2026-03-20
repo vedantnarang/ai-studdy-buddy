@@ -1,5 +1,7 @@
 import { connectDB } from "@/lib/db";
 import Subject from "@/models/Subject";
+import Topic from "@/models/Topic";
+import Flashcard from "@/models/Flashcard";
 import { getAuthUser } from "@/lib/authHelper";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
 import { subjectSchema } from "@/schemas/subject.schema";
@@ -16,13 +18,28 @@ export async function GET(request) {
 
     await connectDB();
 
-    const subjects = await Subject.find({ userId: userPayload.userId });
+    const subjects = await Subject.find({ userId: userPayload.userId }).lean();
 
-    if(subjects.length===0){
+    if(subjects.length === 0){
         return errorResponse("No subjects found", "NOT_FOUND", 404);
     }
 
-    return successResponse(subjects, 200);
+    // High performance check: Find all topics that contain at least one flashcard
+    const flashcardTopicIds = await Flashcard.distinct('topicId', { userId: userPayload.userId });
+    const topicsWithFlashcards = await Topic.find({ 
+        _id: { $in: flashcardTopicIds },
+        userId: userPayload.userId 
+    }).select('subjectId').lean();
+    
+    const subjectIdsWithFlashcards = new Set(topicsWithFlashcards.map(t => t.subjectId.toString()));
+
+    // Attach hasFlashcards boolean back onto the Subject models
+    const enrichedSubjects = subjects.map(subject => ({
+        ...subject,
+        hasFlashcards: subjectIdsWithFlashcards.has(subject._id.toString())
+    }));
+
+    return successResponse(enrichedSubjects, 200);
 
   } catch (error) {
     console.error("Fetch subjects error:", error);

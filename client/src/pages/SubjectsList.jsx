@@ -220,9 +220,9 @@ const SubjectsList = () => {
                     {subject.description || 'No description provided. Click to add topics and notes.'}
                   </p>
 
-                  <div className="mt-auto pt-4 border-t border-gray-50 dark:border-gray-800/50">
+                  <div className="mt-auto pt-4 border-t border-gray-50 dark:border-gray-800/50 flex flex-col gap-2">
                     <button 
-                      className="w-full py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all border"
+                      className="w-full py-2.5 text-xs font-bold uppercase tracking-widest rounded-xl transition-all border"
                       style={{ 
                         color: accentColor, 
                         borderColor: getTint(accentColor, '20') 
@@ -238,6 +238,16 @@ const SubjectsList = () => {
                     >
                       View Subject
                     </button>
+                    {subject.hasFlashcards && (
+                      <Link 
+                        to={`/subject/${subject._id}/flashcards`}
+                        onClick={(e) => e.stopPropagation()} // Prevent double nav since parent is a Link
+                        className="w-full py-2.5 bg-surface-container-high hover:bg-surface-container-highest dark:bg-gray-700 dark:hover:bg-gray-600 text-on-surface dark:text-gray-100 text-xs font-bold uppercase tracking-widest rounded-xl transition-colors text-center shadow-sm flex items-center justify-center gap-2"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">style</span>
+                        Flashcards
+                      </Link>
+                    )}
                   </div>
                 </Link>
               );
