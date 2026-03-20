@@ -7,18 +7,16 @@ const openrouter = createOpenRouter({
 });
 
 // Primary: Gemma 3 is great but often rate-limited or fails with structured JSON
-const PRIMARY_MODEL = process.env.OPENROUTER_PRIMARY_MODEL || 'google/gemma-3-27b-it:free';
-// Fallback: Mistral Small 3.1 24B — excellent at structured JSON and less congested on free tier
-const FALLBACK_MODEL = process.env.OPENROUTER_FALLBACK_MODEL || 'mistralai/mistral-small-3.1-24b-instruct:free';
+const PRIMARY_MODEL = process.env.OPENROUTER_PRIMARY_MODEL || 'google/gemma-3-12b-it:free';
+// Fallback: openrouter/auto — automatically picks from available free models
+const FALLBACK_MODEL = process.env.OPENROUTER_FALLBACK_MODEL || 'openrouter/auto';
 
 function getModel(useFallback = false) {
   const modelId = useFallback ? FALLBACK_MODEL : PRIMARY_MODEL;
   return openrouter(modelId);
 }
 
-/**
- * Robust fallback helper that retries on ANY failure with the secondary model.
- */
+
 async function withFallback(aiCall) {
   try {
     return await aiCall(getModel(false));
