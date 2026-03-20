@@ -1,94 +1,105 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useAnalytics } from '../hooks/useAnalytics';
 import { useState } from 'react';
 
 const AppLayout = () => {
   const { user, logout } = useAuth();
+  const { streak } = useAnalytics();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const navLinks = [
-    { name: 'Dashboard', path: '/dashboard', icon: '📚' },
-  ];
-
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <div className="bg-surface dark:bg-gray-900 font-body text-on-surface dark:text-gray-100 antialiased min-h-screen">
+      
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* SideNavBar Component */}
       <aside 
-        className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300 ease-in-out`}
+        className={`fixed left-0 top-0 h-full z-50 flex flex-col pt-8 pb-4 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl w-64 border-r border-gray-200 dark:border-gray-800 font-headline tracking-tight transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
-        <div className="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700">
-          <Link to="/dashboard" className="text-2xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 px-4">
-            Study Buddy
-          </Link>
+        <div className="px-6 mb-10 flex justify-between items-center">
+          <div>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">Study Buddy</h1>
+            <p className="text-xs text-on-surface-variant font-medium mt-0.5">AI-Powered Learning</p>
+          </div>
+          {/* Mobile Close Btn */}
+          <button className="lg:hidden text-gray-500" onClick={() => setIsSidebarOpen(false)}>
+            <span className="material-symbols-outlined">close</span>
+          </button>
         </div>
-        <nav className="p-4 space-y-2">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                location.pathname.startsWith(link.path)
-                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-semibold'
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-              }`}
-            >
-              <span className="text-lg">{link.icon}</span>
-              {link.name}
-            </Link>
-          ))}
+        
+        <nav className="flex-1 space-y-2">
+          {/* Active Navigation */}
+          <Link 
+            to="/dashboard"
+            onClick={() => setIsSidebarOpen(false)}
+            className={`flex items-center space-x-3 rounded-r-full ml-[-8px] pl-6 py-3 font-semibold transition-transform active:scale-95 ${
+              location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/subject')
+                ? 'bg-blue-100/50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
+            }`}
+          >
+            <span className={`material-symbols-outlined ${location.pathname.startsWith('/dashboard') ? 'filled-icon' : ''}`}>
+              dashboard
+            </span>
+            <span>Dashboard</span>
+          </Link>
         </nav>
+
+        <div className="mt-auto border-t border-surface-container-high dark:border-gray-700 pt-4">
+          <button 
+            onClick={logout}
+            className="w-full flex items-center space-x-3 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 px-6 py-3 transition-colors"
+          >
+            <span className="material-symbols-outlined">logout</span>
+            <span>Logout</span>
+          </button>
+        </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Topbar */}
-        <header className="shrink-0 flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          {/* Mobile Menu Button */}
+      {/* TopNavBar Component */}
+      <header className="sticky top-0 right-0 w-full z-30 flex justify-between items-center px-4 md:px-8 py-4 lg:ml-64 lg:max-w-[calc(100%-16rem)] bg-white/80 dark:bg-slate-900/80 backdrop-blur-md font-headline text-sm font-medium border-b border-gray-100 dark:border-gray-800">
+        <div className="flex items-center gap-4">
+          {/* Hamburger for Mobile */}
           <button 
-            className="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="lg:hidden text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full transition-colors"
             onClick={() => setIsSidebarOpen(true)}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+            <span className="material-symbols-outlined">menu</span>
           </button>
+        </div>
 
-          {/* Search bar placeholder */}
-          <div className="flex-1 flex px-4">
-            <div className="max-w-md w-full relative hidden sm:block">
-               {/* Expandable via Search functionality later */}
-            </div>
+        <div className="flex items-center gap-4 md:gap-6 ml-auto">
+          {/* Streak Badge */}
+          <div 
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-on-primary-container"
+            style={{ backgroundColor: streak > 0 ? '#dbe1ff' : '#f0f4f7', color: streak > 0 ? '#0048bf' : '#717c82' }}
+          >
+            <span className={`material-symbols-outlined text-lg ${streak > 0 ? 'filled-icon text-orange-500' : ''}`}>
+              local_fire_department
+            </span>
+            <span className="font-bold hidden sm:inline">{streak} day streak</span>
+            <span className="font-bold sm:hidden">{streak}</span>
           </div>
-
-          {/* Actions */}
-          <div className="flex flex-none items-center gap-4">
-             {/* Theme Toggle stub */}
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block">
-                {user?.name || user?.email || 'Student'}
-              </span>
-              <button
-                onClick={logout}
-                className="text-sm px-3 py-1.5 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors font-medium border border-red-100 dark:border-red-900/50"
-              >
-                Logout
-              </button>
-            </div>
+          
+          {/* Profile Circle */}
+          <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shadow-sm shadow-blue-500/20">
+            {user?.name ? user.name.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'S')}
           </div>
-        </header>
+        </div>
+      </header>
 
-        {/* Dynamic Route Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-gray-900">
-          <Outlet />
-        </main>
-      </div>
+      {/* Main Content Canvas */}
+      <main className="lg:ml-64 p-4 md:p-8 lg:p-12 min-h-[calc(100vh-80px)]">
+        <Outlet />
+      </main>
     </div>
   );
 };

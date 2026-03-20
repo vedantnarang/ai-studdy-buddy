@@ -199,3 +199,6 @@ firebase.*.json
 *.sqlite
 *.sqlite3
 database.db
+
+
+stitch-screens

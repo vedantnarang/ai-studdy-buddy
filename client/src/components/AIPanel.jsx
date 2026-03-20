@@ -14,9 +14,16 @@ const AIPanel = ({ topic, onGenerated }) => {
     // Check if data already exists to warn user
     const hasData = Array.isArray(topic[type]) ? topic[type].length > 0 : !!topic[type];
     
+    // For flashcards/quiz, if they just want to view them, they should use the sidebar buttons
+    // But if clicking here, maybe they intend to (re)generate or view. 
+    // The design only has "Deep Dive/Flashcards/Quiz" buttons. 
     if (hasData) {
       if (type === 'flashcards') {
         navigate(`/subject/${topic.subjectId}/flashcards`);
+        return;
+      }
+      if (type === 'quiz') {
+        navigate(`/topic/${topic._id}/quiz`);
         return;
       }
       setConfirmAction(type);
@@ -31,7 +38,6 @@ const AIPanel = ({ topic, onGenerated }) => {
 
     try {
       const endpoint = `/topics/${topic._id}/generate/${type}`;
-      // Sending forceRegenerate just in case backend expects it
       const res = await api.post(endpoint, { forceRegenerate: true });
       
       const updatedData = res.data.data || res.data.topic || res.data;
@@ -39,10 +45,6 @@ const AIPanel = ({ topic, onGenerated }) => {
       
       if (onGenerated) {
         onGenerated(updatedData);
-      }
-
-      if (type === 'flashcards') {
-        navigate(`/subject/${topic.subjectId}/flashcards`);
       }
     } catch (err) {
       if (err.response?.status === 429) {
@@ -56,28 +58,23 @@ const AIPanel = ({ topic, onGenerated }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-        <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-        AI Study Features
-      </h3>
-
+    <>
       {/* Confirmation Modal Inline */}
       {confirmAction && (
-        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg animate-in fade-in">
-          <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-3">
+        <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-2xl animate-in fade-in flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
             You already have a {confirmAction} for this topic. Generating a new one will overwrite the existing content. Are you sure?
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-2 shrink-0">
             <button 
               onClick={() => setConfirmAction(null)}
-              className="px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+              className="px-4 py-2 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-bold"
             >
               Cancel
             </button>
             <button 
               onClick={() => executeGeneration(confirmAction)}
-              className="px-3 py-1.5 text-sm bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-md transition-colors"
+              className="px-4 py-2 text-sm bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl shadow-sm transition-colors"
             >
               Overwrite
             </button>
@@ -85,37 +82,69 @@ const AIPanel = ({ topic, onGenerated }) => {
         </div>
       )}
 
-      <div className="flex flex-col gap-3">
-        <button 
-          disabled={loadingType !== null}
-          onClick={() => handleGenerate('summary')}
-          className="flex items-center justify-between px-4 py-3 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-lg transition-colors border border-indigo-100 dark:border-indigo-900/50 disabled:opacity-50"
-        >
-          <span className="font-medium">Generate Summary</span>
-          {loadingType === 'summary' && <span className="animate-spin text-indigo-500 text-xl">↻</span>}
-        </button>
-        
+      {/* AI Action Panel Grid - Exactly matching Stitch UI */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        {/* Action Button: Flashcards */}
         <button 
           disabled={loadingType !== null}
           onClick={() => handleGenerate('flashcards')}
-          className="flex items-center justify-between px-4 py-3 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-lg transition-colors border border-purple-100 dark:border-purple-900/50 disabled:opacity-50"
+          className="group flex flex-col items-start p-6 bg-surface-container-lowest dark:bg-gray-800 rounded-2xl transition-all duration-300 hover:bg-primary hover:scale-[1.02] border border-gray-100 outline-none hover:border-primary/10 dark:border-gray-700 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:bg-surface-container-lowest relative overflow-hidden shadow-sm"
         >
-          <span className="font-medium">
-             {(Array.isArray(topic.flashcards) && topic.flashcards.length > 0) ? 'Show Flashcards' : 'Generate Flashcards'}
-          </span>
-          {loadingType === 'flashcards' && <span className="animate-spin text-purple-500 text-xl">↻</span>}
+          {loadingType === 'flashcards' && (
+             <div className="absolute inset-x-0 top-0 h-1 bg-primary animate-pulse"></div>
+          )}
+          <div className="w-12 h-12 rounded-xl bg-primary-container dark:bg-primary-900/40 group-hover:bg-white/20 flex items-center justify-center mb-4 transition-colors">
+            {loadingType === 'flashcards' ? (
+              <span className="animate-spin text-primary group-hover:text-white text-xl">↻</span>
+            ) : (
+              <span className="material-symbols-outlined text-primary group-hover:text-white">style</span>
+            )}
+          </div>
+          <h3 className="font-headline font-bold text-lg text-on-surface dark:text-gray-100 group-hover:text-white mb-1">Flashcards</h3>
+          <p className="text-sm text-on-surface-variant dark:text-gray-400 group-hover:text-white/80 text-left">Master terminology with active recall.</p>
         </button>
 
+        {/* Action Button: Quiz */}
         <button 
           disabled={loadingType !== null}
           onClick={() => handleGenerate('quiz')}
-          className="flex items-center justify-between px-4 py-3 bg-pink-50 hover:bg-pink-100 dark:bg-pink-900/20 dark:hover:bg-pink-900/40 text-pink-700 dark:text-pink-300 rounded-lg transition-colors border border-pink-100 dark:border-pink-900/50 disabled:opacity-50"
+          className="group flex flex-col items-start p-6 bg-surface-container-lowest dark:bg-gray-800 rounded-2xl transition-all duration-300 hover:bg-[#22C55E] hover:scale-[1.02] border border-gray-100 outline-none hover:border-[#22C55E]/10 dark:border-gray-700 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:bg-surface-container-lowest relative overflow-hidden shadow-sm"
         >
-          <span className="font-medium">Generate Quiz</span>
-          {loadingType === 'quiz' && <span className="animate-spin text-pink-500 text-xl">↻</span>}
+          {loadingType === 'quiz' && (
+             <div className="absolute inset-x-0 top-0 h-1 bg-[#22C55E] animate-pulse"></div>
+          )}
+          <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/40 group-hover:bg-white/20 flex items-center justify-center mb-4 transition-colors">
+            {loadingType === 'quiz' ? (
+              <span className="animate-spin text-[#22C55E] group-hover:text-white text-xl">↻</span>
+            ) : (
+              <span className="material-symbols-outlined text-[#22C55E] group-hover:text-white">quiz</span>
+            )}
+          </div>
+          <h3 className="font-headline font-bold text-lg text-on-surface dark:text-gray-100 group-hover:text-white mb-1">Practice Quiz</h3>
+          <p className="text-sm text-on-surface-variant dark:text-gray-400 group-hover:text-white/80 text-left">Test your knowledge on key concepts.</p>
         </button>
-      </div>
-    </div>
+
+        {/* Action Button: Summary */}
+        <button 
+          disabled={loadingType !== null}
+          onClick={() => handleGenerate('summary')}
+          className="group flex flex-col items-start p-6 bg-surface-container-lowest dark:bg-gray-800 rounded-2xl transition-all duration-300 hover:bg-tertiary hover:scale-[1.02] border border-gray-100 outline-none hover:border-tertiary/10 dark:border-gray-700 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:bg-surface-container-lowest relative overflow-hidden shadow-sm"
+        >
+          {loadingType === 'summary' && (
+             <div className="absolute inset-x-0 top-0 h-1 bg-tertiary animate-pulse"></div>
+          )}
+          <div className="w-12 h-12 rounded-xl bg-tertiary-container dark:bg-tertiary-900/40 group-hover:bg-white/20 flex items-center justify-center mb-4 transition-colors">
+            {loadingType === 'summary' ? (
+              <span className="animate-spin text-tertiary group-hover:text-white text-xl">↻</span>
+            ) : (
+              <span className="material-symbols-outlined text-tertiary group-hover:text-white">auto_awesome</span>
+            )}
+          </div>
+          <h3 className="font-headline font-bold text-lg text-on-surface dark:text-gray-100 group-hover:text-white mb-1">AI Deep Dive</h3>
+          <p className="text-sm text-on-surface-variant dark:text-gray-400 group-hover:text-white/80 text-left">Generate an advanced concept breakdown.</p>
+        </button>
+      </section>
+    </>
   );
 };
 
