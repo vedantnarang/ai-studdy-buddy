@@ -13,6 +13,7 @@ import TopicSummary from './pages/TopicSummary';
 import FlashcardStudy from './pages/FlashcardStudy';
 import SubjectFlashcardReview from './pages/SubjectFlashcardReview';
 import QuizStudy from './pages/QuizStudy';
+import QuizHistory from './pages/QuizHistory';
 import NotFound from './pages/NotFound';
 import './App.css';
 
@@ -57,6 +58,7 @@ function App() {
                  <Route path="/topic/:id/summary" element={<TopicSummary />} />
                  <Route path="/topic/:id/flashcards" element={<FlashcardStudy />} />
                  <Route path="/topic/:id/quiz" element={<QuizStudy />} />
+                 <Route path="/topic/:id/quiz-history" element={<QuizHistory />} />
                  
                  {/* Fallback 404 Route */}
                  <Route path="*" element={<NotFound />} />

@@ -266,12 +266,21 @@ const TopicDetail = () => {
                 <span className="material-symbols-outlined text-white text-2xl">quiz</span>
               </div>
               <h4 className="font-headline font-bold mb-2 text-2xl">Take Quiz</h4>
-              <p className="text-white/80 text-sm mb-8 leading-relaxed">
+              <p className="text-white/80 text-sm mb-6 leading-relaxed">
                 Put your knowledge to the test with multiple-choice questions!
               </p>
-              <button className="w-full py-3.5 bg-white text-[#22C55E] rounded-xl font-bold text-sm tracking-wide shadow-sm hover:shadow-md transition-shadow">
-                Start Quiz
-              </button>
+              <div className="flex gap-3 relative z-10">
+                 <button className="flex-1 py-3.5 bg-white text-[#22C55E] rounded-xl font-bold text-sm tracking-wide shadow-sm hover:shadow-md transition-shadow">
+                   Start Quiz
+                 </button>
+                 <button 
+                   onClick={(e) => { e.stopPropagation(); navigate(`/topic/${topic._id}/quiz-history`); }} 
+                   className="p-3.5 bg-white/20 hover:bg-white/30 text-white rounded-xl transition-colors flex items-center justify-center" 
+                   title="View History"
+                 >
+                   <span className="material-symbols-outlined text-lg">history</span>
+                 </button>
+              </div>
             </div>
           )}
 
