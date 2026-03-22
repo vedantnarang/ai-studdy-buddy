@@ -124,12 +124,23 @@ const SubjectDetail = () => {
           </div>
         </div>
         
-        <button 
-          onClick={() => setIsCreating(true)}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors shrink-0"
-        >
-          New Topic
-        </button>
+        <div className="flex items-center gap-3 shrink-0">
+          {topics.some(t => t.generationStatus?.hasFlashcards) && (
+            <Link
+              to={`/subject/${id}/flashcards`}
+              className="px-4 py-2 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium rounded-lg shadow-sm transition-colors border border-blue-200 dark:border-blue-800 flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[18px]">style</span>
+              View Flashcards
+            </Link>
+          )}
+          <button 
+            onClick={() => setIsCreating(true)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors shrink-0"
+          >
+            New Topic
+          </button>
+        </div>
       </div>
 
       {/* Creation Form */}

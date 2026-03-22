@@ -227,7 +227,7 @@ const TopicDetail = () => {
               </button>
             </div>
           ) : (
-            <div className="bg-primary hover:-translate-y-1 transition-transform duration-300 rounded-3xl p-8 shadow-lg shadow-primary/20 text-white relative overflow-hidden group border border-primary/50 cursor-pointer" onClick={() => navigate(`/subject/${topic.subjectId}/flashcards`)}>
+            <div className="bg-primary hover:-translate-y-1 transition-transform duration-300 rounded-3xl p-8 shadow-lg shadow-primary/20 text-white relative overflow-hidden group border border-primary/50 cursor-pointer" onClick={() => navigate(`/topic/${topic._id}/flashcards`)}>
               <div className="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
               <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-6">
                 <span className="material-symbols-outlined text-white text-2xl">style</span>

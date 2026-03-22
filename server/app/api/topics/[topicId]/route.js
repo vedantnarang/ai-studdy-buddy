@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/db";
 import Topic from "@/models/Topic";
 import Flashcard from "@/models/Flashcard";
 import Quiz from "@/models/Quiz";
+import Subject from "@/models/Subject";
 import { getAuthUser } from "@/lib/authHelper";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
 import { topicSchema } from "@/schemas/topic.schema";
@@ -26,7 +27,18 @@ export async function GET(request, context) {
       return errorResponse("Topic not found", "NOT_FOUND", 404);
     }
 
-    return successResponse(topic, 200);
+    // Attach flashcards from the Flashcard collection so the frontend can access topic.flashcards
+    const flashcards = await Flashcard.find({ topicId }).lean();
+    const topicObj = topic.toObject();
+    topicObj.flashcards = flashcards;
+
+    // Attach subject color for theming
+    const subject = await Subject.findById(topic.subjectId).select('color').lean();
+    if (subject) {
+      topicObj.subjectColor = subject.color;
+    }
+
+    return successResponse(topicObj, 200);
 
   } catch (error) {
     console.error("GET topic error:", error);

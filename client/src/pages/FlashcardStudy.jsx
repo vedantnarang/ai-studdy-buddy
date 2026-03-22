@@ -7,6 +7,7 @@ const FlashcardStudy = () => {
   const navigate = useNavigate();
   const { topic, loading, error } = useTopic(id);
   const flashcards = topic?.flashcards || [];
+  const themeColor = topic?.subjectColor || '#3B82F6';
 
   const {
     currentCard,
@@ -23,7 +24,7 @@ const FlashcardStudy = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2" style={{ borderColor: themeColor }}></div>
       </div>
     );
   }
@@ -43,7 +44,7 @@ const FlashcardStudy = () => {
       <div className="text-center p-12 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 m-8">
         <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">No flashcards available</h3>
         <p className="text-gray-500 dark:text-gray-400 mb-6">Generate flashcards from the topic detail page first to test your knowledge.</p>
-        <Link to={`/topic/${id}`} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium">
+        <Link to={`/topic/${id}`} className="px-4 py-2 text-white rounded-lg transition-colors font-medium" style={{ backgroundColor: themeColor }}>
           Back to Topic
         </Link>
       </div>
@@ -68,7 +69,7 @@ const FlashcardStudy = () => {
             >
               Study Again
            </button>
-           <Link to={`/topic/${id}`} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm">
+           <Link to={`/topic/${id}`} className="px-6 py-3 text-white font-medium rounded-xl transition-colors shadow-sm" style={{ backgroundColor: themeColor }}>
               Return to Topic
            </Link>
          </div>
@@ -91,8 +92,8 @@ const FlashcardStudy = () => {
       {/* Progress Bar */}
       <div className="w-full max-w-2xl bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-12 shadow-inner overflow-hidden">
         <div 
-          className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-          style={{ width: `${((currentIndex) / totalCards) * 100}%` }}
+          className="h-2 rounded-full transition-all duration-300" 
+          style={{ width: `${((currentIndex) / totalCards) * 100}%`, backgroundColor: themeColor }}
         ></div>
       </div>
 
@@ -113,11 +114,11 @@ const FlashcardStudy = () => {
           {/* Front */}
           <div 
             className="absolute w-full h-full bg-white dark:bg-gray-800 rounded-2xl p-8 flex flex-col items-center justify-center border border-gray-200 dark:border-gray-700 pointer-events-none"
-            style={{ backfaceVisibility: 'hidden' }}
+            style={{ backfaceVisibility: 'hidden' , backgroundColor: `${themeColor}12`}}
           >
-            <span className="absolute top-5 left-5 text-xs font-bold tracking-wider text-blue-500 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-md uppercase">Question</span>
+            <span className="absolute top-5 left-5 text-xs font-bold tracking-wider px-3 py-1 rounded-md uppercase" style={{ color: themeColor, backgroundColor: `${themeColor}15` }}>Question</span>
             <h2 className="text-3xl sm:text-4xl text-center font-medium text-gray-900 dark:text-white leading-relaxed px-4">
-              {currentCard?.front}
+              {currentCard?.question}
             </h2>
             <p className="absolute bottom-5 right-5 text-sm text-gray-400 dark:text-gray-500 flex items-center gap-1 font-medium bg-gray-50 dark:bg-gray-900 px-3 py-1.5 rounded-md border border-gray-100 dark:border-gray-700">
               Tap to flip
@@ -127,12 +128,12 @@ const FlashcardStudy = () => {
 
           {/* Back */}
           <div 
-            className="absolute w-full h-full bg-blue-50 dark:bg-blue-900/30 rounded-2xl p-8 flex flex-col items-center justify-center border border-blue-200 dark:border-blue-800 pointer-events-none"
-            style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+            className="absolute w-full h-full rounded-2xl p-8 flex flex-col items-center justify-center pointer-events-none"
+            style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', backgroundColor: `${themeColor}12`, borderWidth: '1px', borderStyle: 'solid', borderColor: `${themeColor}40` }}
           >
             <span className="absolute top-5 left-5 text-xs font-bold tracking-wider text-green-600 bg-green-100 dark:bg-green-900/50 dark:text-green-400 px-3 py-1 rounded-md uppercase">Answer</span>
             <p className="text-2xl text-center text-gray-800 dark:text-gray-200 leading-relaxed max-h-full overflow-y-auto w-full px-4 scrollbar-thin">
-              {currentCard?.back}
+              {currentCard?.answer}
             </p>
           </div>
 

@@ -19,7 +19,7 @@ const AIPanel = ({ topic, onGenerated }) => {
     // The design only has "Deep Dive/Flashcards/Quiz" buttons. 
     if (hasData) {
       if (type === 'flashcards') {
-        navigate(`/subject/${topic.subjectId}/flashcards`);
+        navigate(`/topic/${topic._id}/flashcards`);
         return;
       }
       if (type === 'quiz') {
@@ -52,7 +52,7 @@ const AIPanel = ({ topic, onGenerated }) => {
       }
 
       if (type === 'flashcards') {
-        navigate(`/subject/${topic.subjectId}/flashcards`);
+        navigate(`/topic/${topic._id}/flashcards`);
       } else if (type === 'quiz') {
         navigate(`/topic/${topic._id}/quiz`);
       } else if (type === 'summary') {
