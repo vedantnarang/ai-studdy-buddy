@@ -53,7 +53,10 @@ export async function DELETE(request, { params }) {
 
     const updatedTopic = await Topic.findOneAndUpdate(
       { _id: topicId, userId: userPayload.userId },
-      { $pull: { sourceDocuments: { _id: documentId } } },
+      { 
+        $pull: { sourceDocuments: { _id: documentId } },
+        $set: { materialsUpdatedAt: new Date() }
+      },
       { new: true }
     );
 

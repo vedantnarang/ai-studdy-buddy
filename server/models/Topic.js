@@ -93,6 +93,10 @@ const topicSchema = new mongoose.Schema(
         default: false,
       },
     },
+    materialsUpdatedAt: { 
+      type: Date, 
+      default: Date.now 
+    },
   },
   {
     timestamps: true,
@@ -101,7 +105,6 @@ const topicSchema = new mongoose.Schema(
 
 topicSchema.index({ subjectId: 1, normalizedTitle: 1 }, { unique: true });
 
-// Prevent OverwriteModelError in Next.js backend
 const Topic = mongoose.models.Topic || mongoose.model('Topic', topicSchema);
 
 export default Topic;

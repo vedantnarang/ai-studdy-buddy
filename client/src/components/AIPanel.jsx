@@ -6,13 +6,17 @@ import api from '../services/api';
 const AIPanel = ({ topic, onGenerated }) => {
   const [loadingType, setLoadingType] = useState(null); // 'summary', 'flashcards', 'quiz'
   const [confirmAction, setConfirmAction] = useState(null);
+  const [quizWarning, setQuizWarning] = useState(false);
   const navigate = useNavigate();
 
   if (!topic) return null;
 
   const handleGenerate = async (type) => {
     // Check if data already exists to warn user
-    const hasData = Array.isArray(topic[type]) ? topic[type].length > 0 : !!topic[type];
+    let hasData = false;
+    if (type === 'flashcards' && topic.generationStatus?.hasFlashcards) hasData = true;
+    if (type === 'quiz' && topic.generationStatus?.hasQuiz) hasData = true;
+    if (type === 'summary' && topic.generationStatus?.hasSummary) hasData = true;
     
     // For flashcards/quiz, if they just want to view them, they should use the sidebar buttons
     // But if clicking here, maybe they intend to (re)generate or view. 
@@ -25,6 +29,7 @@ const AIPanel = ({ topic, onGenerated }) => {
       
       // For flashcards and quiz, show the options alert
       setConfirmAction(type);
+      if (type === 'quiz') setQuizWarning(false);
       return;
     }
     await executeGeneration(type);
@@ -65,13 +70,48 @@ const AIPanel = ({ topic, onGenerated }) => {
     }
   };
 
+  const handleTakeLatest = () => {
+    const materialsObj = topic.materialsUpdatedAt ? new Date(topic.materialsUpdatedAt) : new Date(0);
+    const quizObj = topic.latestQuizCreatedAt ? new Date(topic.latestQuizCreatedAt) : new Date(0);
+    const hasMaterialsChanged = materialsObj.getTime() - quizObj.getTime() > 5000;
+
+    if (hasMaterialsChanged) {
+      setQuizWarning(true);
+    } else {
+      navigate(`/topic/${topic._id}/quiz`);
+    }
+  };
+
   return (
     <>
       {/* Confirmation Modal Inline */}
       {confirmAction && (
         <div className="mb-6 p-4 bg-surface-container-high border border-surface-variant/50 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
           
-          {confirmAction === 'quiz' ? (
+          {confirmAction === 'quiz' && quizWarning ? (
+            <div className="flex-1">
+              <p className="text-sm font-medium text-[#F59E0B]">
+                <span className="material-symbols-outlined text-sm align-middle mr-1 pb-0.5">warning</span>
+                You've updated your study materials since the last quiz was generated. Test yourself on the new material?
+              </p>
+              <div className="flex flex-wrap items-center gap-3 mt-3">
+                <button 
+                  onClick={() => navigate(`/topic/${topic._id}/quiz`)}
+                  className="px-4 py-2 bg-surface hover:bg-surface-variant text-on-surface text-xs font-bold rounded-lg transition-colors border border-surface-variant/50"
+                  disabled={!!loadingType}
+                >
+                  Continue Anyway
+                </button>
+                <button 
+                  onClick={() => executeGeneration('quiz')}
+                  className="px-4 py-2 bg-primary text-on-primary text-xs font-bold rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+                  disabled={!!loadingType}
+                >
+                  {loadingType === 'quiz' ? 'Generating...' : 'Generate New Quiz'}
+                </button>
+              </div>
+            </div>
+          ) : confirmAction === 'quiz' ? (
             <div className="flex-1">
               <p className="text-sm font-medium text-on-surface">
                 You have generated <span className="font-bold text-primary">{topic.quizCount || 1}</span> quiz(zes) for this topic.
@@ -85,7 +125,7 @@ const AIPanel = ({ topic, onGenerated }) => {
                   View History
                 </button>
                 <button 
-                  onClick={() => navigate(`/topic/${topic._id}/quiz`)}
+                  onClick={handleTakeLatest}
                   className="px-4 py-2 bg-surface hover:bg-surface-variant text-on-surface text-xs font-bold rounded-lg transition-colors border border-surface-variant/50"
                   disabled={!!loadingType}
                 >

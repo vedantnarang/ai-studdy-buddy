@@ -49,6 +49,7 @@ export async function DELETE(request, { params }) {
     topic.sourceImages = topic.sourceImages.filter(
       img => img._id?.toString() !== imageId && img.publicId !== imageId
     );
+    topic.materialsUpdatedAt = new Date();
     await topic.save();
 
     return successResponse(topic, 200);

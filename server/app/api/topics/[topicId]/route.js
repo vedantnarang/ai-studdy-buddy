@@ -36,6 +36,12 @@ export async function GET(request, context) {
     const quizCount = await Quiz.countDocuments({ topicId, userId: userPayload.userId });
     topicObj.quizCount = quizCount;
 
+    // Attach latest quiz creation date to compare against material updates
+    const latestQuiz = await Quiz.findOne({ topicId, userId: userPayload.userId }).sort({ createdAt: -1 });
+    if (latestQuiz) {
+      topicObj.latestQuizCreatedAt = latestQuiz.createdAt;
+    }
+
     // Attach subject color for theming
     const subject = await Subject.findById(topic.subjectId).select('color').lean();
     if (subject) {
@@ -90,6 +96,7 @@ export async function PUT(request, context) {
 
     if (body.notes !== undefined) {
       updateData.notes = body.notes;
+      updateData.materialsUpdatedAt = new Date();
     }
 
     if (body.summary !== undefined) {

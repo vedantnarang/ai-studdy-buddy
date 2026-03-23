@@ -145,23 +145,15 @@ export async function POST(request, { params }) {
       });
     }
 
-    // Push documents and images into their respective arrays
-    const updateOps = {};
-    if (newDocuments.length > 0) {
-      updateOps.sourceDocuments = { $each: newDocuments };
+    // Save changes to database
+    topic.sourceDocuments.push(...newDocuments);
+    topic.sourceImages.push(...newImages);
+    
+    if (newDocuments.length > 0 || newImages.length > 0) {
+      topic.materialsUpdatedAt = new Date();
     }
-    if (newImages.length > 0) {
-      updateOps.sourceImages = { $each: newImages };
-    }
-    if (Object.keys(updateOps).length > 0) {
-      const pushObj = {};
-      if (updateOps.sourceDocuments) pushObj.sourceDocuments = updateOps.sourceDocuments;
-      if (updateOps.sourceImages) pushObj.sourceImages = updateOps.sourceImages;
-      await Topic.findOneAndUpdate(
-        { _id: topicId, userId: userPayload.userId },
-        { $push: pushObj }
-      );
-    }
+    
+    await topic.save();
 
     // Re-fetch the updated topic to return it
     const updatedTopic = await Topic.findById(topicId);
