@@ -101,6 +101,7 @@ const TopicDetail = () => {
   }
 
   const sourceDocuments = topic.sourceDocuments || [];
+  const sourceImages = topic.sourceImages || [];
   const hasFlashcards = topic.generationStatus?.hasFlashcards === true;
   const hasQuiz = topic.generationStatus?.hasQuiz === true;
 
@@ -166,8 +167,30 @@ const TopicDetail = () => {
                </h3>
             </div>
             
-            {sourceDocuments.length > 0 ? (
+            {(sourceDocuments.length > 0 || sourceImages.length > 0) ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                {/* Uploaded Images */}
+                {sourceImages.map((img, index) => (
+                  <div
+                    key={img._id || `img-${index}`}
+                    onClick={() => setSelectedDoc({ _id: img._id, fileName: img.fileName || (img.url ? decodeURIComponent(img.url.split('/').pop()) : 'Image'), fileType: 'image', extractedText: img.extractedText, imageUrl: img.url })}
+                    className="group relative flex items-start gap-4 p-5 bg-surface-container-low dark:bg-gray-700/50 rounded-2xl border border-transparent cursor-pointer hover:border-primary/30 hover:bg-surface-container-lowest hover:shadow-sm dark:hover:bg-gray-700 transition-all border-dashed"
+                  >
+                    <img 
+                      src={img.url} 
+                      alt="Uploaded"
+                      className="w-12 h-12 rounded-xl object-cover shrink-0 border border-gray-200 dark:border-gray-600"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-on-surface dark:text-white truncate">{img.fileName || (img.url ? decodeURIComponent(img.url.split('/').pop()) : 'Image')}</p>
+                      <p className="text-xs text-on-surface-variant mt-1 flex items-center gap-2">
+                        <span className="font-mono uppercase">image</span>
+                      </p>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Uploaded Documents */}
                 {sourceDocuments.map((doc) => (
                   <div
                     key={doc._id}

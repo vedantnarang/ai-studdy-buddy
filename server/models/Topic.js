@@ -1,6 +1,10 @@
 import mongoose from 'mongoose';
 
 const sourceImageSchema = new mongoose.Schema({
+  fileName: {
+    type: String,
+    required: false,
+  },
   url: {
     type: String,
     required: true,
@@ -26,7 +30,7 @@ const sourceDocumentSchema = new mongoose.Schema({
   },
   fileType: {
     type: String,
-    enum: ['pdf', 'txt'],
+    enum: ['pdf', 'txt', 'image'],
     required: true,
   },
   extractedText: {
@@ -35,7 +39,7 @@ const sourceDocumentSchema = new mongoose.Schema({
   },
   extractionMethod: {
     type: String,
-    enum: ['text-parse', 'ocr'],
+    enum: ['text-parse', 'ocr', 'ai-vision'],
     default: 'text-parse',
   },
   uploadedAt: {

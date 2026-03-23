@@ -4,6 +4,7 @@ import { successResponse, errorResponse } from "@/lib/apiResponse";
 import Topic from "@/models/Topic";
 import { PDFParse } from "pdf-parse"; 
 import { extractTextFromScannedPDF } from "@/services/ocr.service";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 
 // Check if pdf-parse output is meaningful text or just page markers / garbage
 function isTextMeaningful(text) {
@@ -37,16 +38,17 @@ export async function POST(request, { params }) {
       return errorResponse("No files uploaded", "BAD_REQUEST", 400);
     }
 
-    const allowedTypes = ['application/pdf', 'text/plain'];
+    const allowedTypes = ['application/pdf', 'text/plain', 'image/webp', 'image/png', 'image/jpeg'];
     const maxSize = 5 * 1024 * 1024; // 5MB
 
     const results = [];
     const newDocuments = [];
+    const newImages = [];
 
     for (const file of files) {
       // Validate type
       if (!allowedTypes.includes(file.type)) {
-        results.push({ fileName: file.name, success: false, error: "Invalid file type. Only PDF and TXT files are allowed." });
+        results.push({ fileName: file.name, success: false, error: "Invalid file type. Only PDF, TXT, JPG, PNG, and WEBP files are allowed." });
         continue;
       }
 
@@ -61,9 +63,10 @@ export async function POST(request, { params }) {
 
       let extractedText = "";
       let extractionMethod = "text-parse";
-      const fileType = file.type === 'application/pdf' ? 'pdf' : 'txt';
+      let fileType;
 
       if (file.type === 'application/pdf') {
+        fileType = 'pdf';
         // Step 1: Try pdf-parse (fast, local, free)
         try {
           const parser = new PDFParse({ data: buffer });
@@ -92,9 +95,39 @@ export async function POST(request, { params }) {
             continue;
           }
         }
-      } else {
-        // Plain text file
+      } else if (file.type === 'text/plain') {
+        fileType = 'txt';
         extractedText = buffer.toString('utf-8');
+      } else if (file.type.startsWith('image/')) {
+        // Image: upload to Cloudinary only (AI vision disabled for now)
+        try {
+          console.log(`Uploading image "${file.name}" to Cloudinary...`);
+          const cloudinaryResult = await uploadToCloudinary(buffer, file.name);
+          console.log(`Cloudinary upload succeeded: ${cloudinaryResult.url}`);
+
+          newImages.push({
+            fileName: file.name,
+            url: cloudinaryResult.url,
+            publicId: cloudinaryResult.publicId,
+            extractedText: '', // To be filled later by async/batch job
+          });
+
+          results.push({
+            fileName: file.name,
+            success: true,
+            extractionMethod: 'none',
+            imageUrl: cloudinaryResult.url,
+            extractedPreview: 'Image uploaded successfully. AI processing pending.',
+          });
+        } catch (uploadError) {
+          console.error(`Image upload failed for ${file.name}:`, uploadError.message);
+          results.push({ 
+            fileName: file.name, 
+            success: false, 
+            error: `Failed to upload image: ${uploadError.message}` 
+          });
+        }
+        continue; // Images go to sourceImages, not sourceDocuments
       }
 
       newDocuments.push({
@@ -112,19 +145,30 @@ export async function POST(request, { params }) {
       });
     }
 
-    // Push all successfully parsed documents into sourceDocuments
+    // Push documents and images into their respective arrays
+    const updateOps = {};
     if (newDocuments.length > 0) {
+      updateOps.sourceDocuments = { $each: newDocuments };
+    }
+    if (newImages.length > 0) {
+      updateOps.sourceImages = { $each: newImages };
+    }
+    if (Object.keys(updateOps).length > 0) {
+      const pushObj = {};
+      if (updateOps.sourceDocuments) pushObj.sourceDocuments = updateOps.sourceDocuments;
+      if (updateOps.sourceImages) pushObj.sourceImages = updateOps.sourceImages;
       await Topic.findOneAndUpdate(
         { _id: topicId, userId: userPayload.userId },
-        { $push: { sourceDocuments: { $each: newDocuments } } }
+        { $push: pushObj }
       );
     }
 
     // Re-fetch the updated topic to return it
     const updatedTopic = await Topic.findById(topicId);
 
+    const totalProcessed = newDocuments.length + newImages.length;
     return successResponse({
-      message: `${newDocuments.length} of ${files.length} file(s) processed successfully`,
+      message: `${totalProcessed} of ${files.length} file(s) processed successfully`,
       results,
       topic: updatedTopic,
     }, 201);

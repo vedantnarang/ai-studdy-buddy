@@ -1,10 +1,18 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 const DocumentUpload = ({ onUpload, uploading: externalUploading }) => {
   const [dragActive, setDragActive] = useState(false);
   const [files, setFiles] = useState([]);
   const [error, setError] = useState('');
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      files.forEach(file => {
+        if (file.preview) URL.revokeObjectURL(file.preview);
+      });
+    };
+  }, [files]);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -34,15 +42,17 @@ const DocumentUpload = ({ onUpload, uploading: externalUploading }) => {
     e.target.value = '';
   };
 
+  const isImageType = (type) => type.startsWith('image/');
+
   const addFiles = (newFiles) => {
     setError('');
-    const validTypes = ['application/pdf', 'text/plain'];
+    const validTypes = ['application/pdf', 'text/plain', 'image/webp', 'image/png', 'image/jpeg'];
     const maxSize = 5 * 1024 * 1024;
     const validFiles = [];
 
     for (const file of newFiles) {
       if (!validTypes.includes(file.type)) {
-        setError(`"${file.name}" is not a valid file type. Only PDF and TXT files are allowed.`);
+        setError(`"${file.name}" is not a valid file type. Only PDF, TXT, JPG, PNG, and WEBP files are allowed.`);
         continue;
       }
       if (file.size > maxSize) {
@@ -52,6 +62,10 @@ const DocumentUpload = ({ onUpload, uploading: externalUploading }) => {
       // Prevent duplicate file names
       const alreadyAdded = files.some(f => f.name === file.name && f.size === file.size);
       if (!alreadyAdded) {
+        // Add preview URL for images
+        if (isImageType(file.type)) {
+          file.preview = URL.createObjectURL(file);
+        }
         validFiles.push(file);
       }
     }
@@ -62,7 +76,11 @@ const DocumentUpload = ({ onUpload, uploading: externalUploading }) => {
   };
 
   const removeFile = (index) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFiles(prev => {
+      const removed = prev[index];
+      if (removed?.preview) URL.revokeObjectURL(removed.preview);
+      return prev.filter((_, i) => i !== index);
+    });
     setError('');
   };
 
@@ -70,6 +88,10 @@ const DocumentUpload = ({ onUpload, uploading: externalUploading }) => {
     if (files.length === 0 || !onUpload) return;
     const result = await onUpload(files);
     if (result?.success) {
+      // Clean up previews before clearing
+      files.forEach(file => {
+        if (file.preview) URL.revokeObjectURL(file.preview);
+      });
       setFiles([]);
     }
   };
@@ -97,7 +119,7 @@ const DocumentUpload = ({ onUpload, uploading: externalUploading }) => {
           ref={inputRef}
           type="file" 
           className="hidden" 
-          accept="application/pdf,text/plain" 
+          accept="application/pdf,text/plain,image/webp,image/png,image/jpeg" 
           onChange={handleChange} 
           multiple
         />
@@ -105,7 +127,7 @@ const DocumentUpload = ({ onUpload, uploading: externalUploading }) => {
         <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
           <span className="font-semibold text-blue-600 dark:text-blue-400">Click to upload</span> or drag and drop
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">PDF or TXT — select multiple files at once (MAX. 5MB each)</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">PDF, TXT, or images (JPG, PNG, WEBP) — MAX. 5MB each</p>
       </div>
 
       {/* Selected Files List */}
@@ -115,12 +137,22 @@ const DocumentUpload = ({ onUpload, uploading: externalUploading }) => {
           {files.map((file, index) => (
             <div key={`${file.name}-${index}`} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
               <div className="flex items-center gap-3 overflow-hidden">
-                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-lg flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                </div>
+                {isImageType(file.type) && file.preview ? (
+                  <img 
+                    src={file.preview} 
+                    alt={file.name} 
+                    className="w-10 h-10 rounded-lg object-cover shrink-0 border border-gray-200 dark:border-gray-600"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-lg flex items-center justify-center shrink-0">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  </div>
+                )}
                 <div className="truncate">
                   <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{file.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
                 </div>
               </div>
               <button 

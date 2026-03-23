@@ -67,30 +67,22 @@ export async function generateQuiz(notes, count = 5) {
 
 // --- Image-based generation ---
 
-export async function extractTextFromImage(imageBuffer, mimeType) {
-  const { text } = await withFallback((model) => 
-    generateText({
-      model,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `You are a precise text extraction assistant. Look at this image and:
-1. Extract ALL text content you can see, including handwritten text.
-2. Organize it logically (preserve headings, bullet points, numbered lists).
-3. If you see a diagram or chart, describe what it shows in clear text.
-4. If handwriting is unclear, make your best guess and put uncertain words in [brackets].
+export async function extractTextFromImage(buffer, mimeType) {
+  const prompt = `You are an expert tutor. Analyze this uploaded image and extract the meaningful educational information. Transcribe any text/handwriting accurately. If it is a diagram or chart, explain what it represents. If it contains math, write out the equations cleanly. Format your response in Markdown.`;
 
-Respond with ONLY the extracted and organized text. No commentary.`,
-            },
-            { type: 'image', image: imageBuffer, mimeType },
-          ],
-        },
-      ],
-    })
-  );
+  const { text } = await generateText({
+    model: openrouter('google/gemini-2.5-flash'),
+    maxTokens: 4096,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: prompt },
+          { type: 'image', image: buffer, mimeType },
+        ],
+      },
+    ],
+  });
   return text;
 }
 
