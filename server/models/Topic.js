@@ -21,7 +21,7 @@ const sourceImageSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-}, { _id: false });
+});
 
 const sourceDocumentSchema = new mongoose.Schema({
   fileName: {

@@ -49,12 +49,14 @@ export async function POST(request, { params }) {
       topic.notes,
       ...(topic.sourceDocuments || []).map(d => d.extractedText)
     ].filter(text => text && text.trim().length > 0).join('\n\n');
+    //soft limit
+    const imageUrls = (topic.sourceImages || []).map(img => img.url).slice(0, 3);
 
-    if (!allNotes || allNotes.trim().length === 0) {
-      return errorResponse("Topic has no notes or documents to generate from", "NO_CONTENT", 400);
+    if (!allNotes && imageUrls.length === 0) {
+      return errorResponse("Topic has no notes, documents, or images to generate from", "NO_CONTENT", 400);
     }
 
-    const flashcards = await generateFlashcards(allNotes);
+    const flashcards = await generateFlashcards(allNotes, imageUrls);
 
     if (forceRegenerate) {
       await Flashcard.deleteMany({ topicId, userId: userPayload.userId });

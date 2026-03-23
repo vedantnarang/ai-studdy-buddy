@@ -18,18 +18,12 @@ const AIPanel = ({ topic, onGenerated }) => {
     // But if clicking here, maybe they intend to (re)generate or view. 
     // The design only has "Deep Dive/Flashcards/Quiz" buttons. 
     if (hasData) {
-      if (type === 'flashcards') {
-        navigate(`/topic/${topic._id}/flashcards`);
-        return;
-      }
-      if (type === 'quiz') {
-        navigate(`/topic/${topic._id}/quiz`);
-        return;
-      }
       if (type === 'summary') {
         navigate(`/topic/${topic._id}/summary`);
         return;
       }
+      
+      // For flashcards and quiz, show the options alert
       setConfirmAction(type);
       return;
     }
@@ -59,7 +53,9 @@ const AIPanel = ({ topic, onGenerated }) => {
         navigate(`/topic/${topic._id}/summary`);
       }
     } catch (err) {
-      if (err.response?.status === 429) {
+      if (err.response?.status === 403 && err.response?.data?.errorCode === 'UPGRADE_REQUIRED') {
+         navigate('/pricing');
+      } else if (err.response?.status === 429) {
          toast.error("AI is taking a breather, try again in 30s");
       } else {
          toast.error(err.response?.data?.message || err.message || `Failed to generate ${type}`);
@@ -73,24 +69,68 @@ const AIPanel = ({ topic, onGenerated }) => {
     <>
       {/* Confirmation Modal Inline */}
       {confirmAction && (
-        <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-2xl animate-in fade-in flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-            You already have a {confirmAction} for this topic. Generating a new one will overwrite the existing content. Are you sure?
-          </p>
-          <div className="flex gap-2 shrink-0">
-            <button 
-              onClick={() => setConfirmAction(null)}
-              className="px-4 py-2 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-bold"
-            >
-              Cancel
-            </button>
-            <button 
-              onClick={() => executeGeneration(confirmAction)}
-              className="px-4 py-2 text-sm bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl shadow-sm transition-colors"
-            >
-              Overwrite
-            </button>
-          </div>
+        <div className="mb-6 p-4 bg-surface-container-high border border-surface-variant/50 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
+          
+          {confirmAction === 'quiz' ? (
+            <div className="flex-1">
+              <p className="text-sm font-medium text-on-surface">
+                You have generated <span className="font-bold text-primary">{topic.quizCount || 1}</span> quiz(zes) for this topic.
+              </p>
+              <div className="flex flex-wrap items-center gap-3 mt-3">
+                <button 
+                  onClick={() => navigate(`/topic/${topic._id}/quiz-history`)}
+                  className="px-4 py-2 bg-surface hover:bg-surface-variant text-on-surface text-xs font-bold rounded-lg transition-colors border border-surface-variant/50"
+                  disabled={!!loadingType}
+                >
+                  View History
+                </button>
+                <button 
+                  onClick={() => navigate(`/topic/${topic._id}/quiz`)}
+                  className="px-4 py-2 bg-surface hover:bg-surface-variant text-on-surface text-xs font-bold rounded-lg transition-colors border border-surface-variant/50"
+                  disabled={!!loadingType}
+                >
+                  Take Latest
+                </button>
+                <button 
+                  onClick={() => executeGeneration('quiz')}
+                  className="px-4 py-2 bg-primary text-on-primary text-xs font-bold rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+                  disabled={!!loadingType}
+                >
+                  {loadingType === 'quiz' ? 'Generating...' : 'Generate New'}
+                </button>
+              </div>
+            </div>
+          ) : confirmAction === 'flashcards' ? (
+            <div className="flex-1">
+              <p className="text-sm font-medium text-on-surface">
+                You already have generated flashcards for this topic.
+              </p>
+              <div className="flex flex-wrap items-center gap-3 mt-3">
+                <button 
+                  onClick={() => navigate(`/topic/${topic._id}/flashcards`)}
+                  className="px-4 py-2 bg-surface hover:bg-surface-variant text-on-surface text-xs font-bold rounded-lg transition-colors border border-surface-variant/50"
+                  disabled={!!loadingType}
+                >
+                  View Existing
+                </button>
+                <button 
+                  onClick={() => executeGeneration('flashcards')}
+                  className="px-4 py-2 bg-primary text-on-primary text-xs font-bold rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+                  disabled={!!loadingType}
+                >
+                  {loadingType === 'flashcards' ? 'Generating...' : 'Generate New'}
+                </button>
+              </div>
+            </div>
+          ) : null}
+          
+          <button 
+            onClick={() => setConfirmAction(null)}
+            className="self-end md:self-auto p-2 text-on-surface-variant hover:text-on-surface rounded-full hover:bg-surface-variant/30 transition-colors"
+            title="Dismiss"
+          >
+             <span className="material-symbols-outlined text-sm">close</span>
+          </button>
         </div>
       )}
 

@@ -194,7 +194,7 @@ const TopicDetail = () => {
                       </p>
                     </div>
                     <button
-                      onClick={(e) => handleImageDelete(e, img._id)}
+                      onClick={(e) => handleImageDelete(e, img.publicId || img._id)}
                       className="opacity-0 group-hover:opacity-100 absolute top-3 right-3 p-2 text-outline-variant hover:text-error rounded-full hover:bg-error-container/50 transition-all"
                     >
                       <span className="material-symbols-outlined text-lg">delete</span>

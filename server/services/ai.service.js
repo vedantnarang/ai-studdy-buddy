@@ -1,6 +1,7 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { generateText, generateObject } from 'ai';
 import { FlashcardSchema, QuizSchema } from '../schemas/ai.schemas.js';
+import { buildFlashcardPrompt, buildQuizPrompt, buildSummaryPrompt } from './prompts.js';
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -10,6 +11,12 @@ const openrouter = createOpenRouter({
 const PRIMARY_MODEL = process.env.OPENROUTER_PRIMARY_MODEL || 'google/gemma-3-12b-it:free';
 // Fallback: openrouter/auto — automatically picks from available free models
 const FALLBACK_MODEL = process.env.OPENROUTER_FALLBACK_MODEL || 'openrouter/auto';
+
+const VISION_MODELS = [
+  'google/gemini-2.5-flash',
+  'meta-llama/llama-3.2-11b-vision-instruct:free',
+  'google/gemma-3-12b-it:free',
+];
 
 function getModel(useFallback = false) {
   const modelId = useFallback ? FALLBACK_MODEL : PRIMARY_MODEL;
@@ -31,35 +38,113 @@ async function withFallback(aiCall) {
   }
 }
 
-// --- Text-based generation ---
+async function withVisionFallback(fn) {
+  // 402 is OpenRouter's "Payment Required" or "Credit Limit Reached" error
+  const retryableCodes = [429, 503, 502, 402];
+  
+  for (const modelId of VISION_MODELS) {
+    try {
+      return await fn(modelId);
+    } catch (error) {
+      const code = error.statusCode || error.status;
+      if (retryableCodes.includes(code)) {
+        console.warn(`Vision model ${modelId} failed with ${code}, trying next...`);
+        continue;
+      }
+      throw error; 
+    }
+  }
+  
+  throw new Error("All vision models are currently unavailable. Please try again shortly.");
+}
 
-export async function generateSummary(notes) {
+
+export async function generateSummary(notes, imageUrls = []) {
+  const hasImages = imageUrls.length > 0;
+
+  if (hasImages) {
+    return withVisionFallback(async (modelId) => {
+      const { text } = await generateText({
+        model: openrouter(modelId),
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: buildSummaryPrompt(notes, imageUrls.length) },
+            ...imageUrls.map(url => ({ type: 'image', image: new URL(url) })) 
+          ]
+        }]
+      });
+      return text;
+    });
+  }
+
+
   const { text } = await withFallback((model) => 
     generateText({
       model,
-      prompt: `You are an expert tutor. Summarize the following study notes in a clear, structured format with key concepts highlighted. Highlight important terms in bold.\n\nNotes:\n${notes}`,
+      prompt: buildSummaryPrompt(notes, 0),
     })
   );
   return text;
 }
 
-export async function generateFlashcards(notes, count = 10) {
+export async function generateFlashcards(notes, imageUrls = [], count = 10) {
+  const hasImages = imageUrls.length > 0;
+
+  if (hasImages) {
+    return withVisionFallback(async (modelId) => {
+      const { object } = await generateObject({
+        model: openrouter(modelId),
+        schema: FlashcardSchema,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: buildFlashcardPrompt(notes, imageUrls.length) },
+            ...imageUrls.map(url => ({ type: 'image', image: new URL(url) }))
+          ]
+        }]
+      });
+      return object.flashcards;
+    });
+  }
+
+  // text-only path
   const { object } = await withFallback((model) => 
     generateObject({
       model,
       schema: FlashcardSchema,
-      prompt: `You are an expert tutor. Generate exactly ${count} flashcards from these study notes. Return your response as a JSON object matching this schema. Each flashcard should test one specific concept.\n\nNotes:\n${notes}`,
+      prompt: buildFlashcardPrompt(notes, 0) + `\n\nGenerate exactly ${count} flashcards.`,
     })
   );
   return object.flashcards;
 }
 
-export async function generateQuiz(notes, count = 5) {
+export async function generateQuiz(notes, imageUrls = [], count = 5) {
+  const hasImages = imageUrls.length > 0;
+
+  if (hasImages) {
+    return withVisionFallback(async (modelId) => {
+      const { object } = await generateObject({
+        model: openrouter(modelId),
+        schema: QuizSchema,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: buildQuizPrompt(notes, imageUrls.length) },
+            ...imageUrls.map(url => ({ type: 'image', image: new URL(url) }))
+          ]
+        }]
+      });
+      return object.questions;
+    });
+  }
+
+  // text-only path
   const { object } = await withFallback((model) => 
     generateObject({
       model,
       schema: QuizSchema,
-      prompt: `You are an expert tutor. Generate exactly ${count} multiple-choice questions from these study notes. Return your response as a JSON object matching this schema. Make the wrong options plausible but clearly incorrect to someone who studied the material.\n\nNotes:\n${notes}`,
+      prompt: buildQuizPrompt(notes, 0) + `\n\nGenerate exactly ${count} questions.`,
     })
   );
   return object.questions;

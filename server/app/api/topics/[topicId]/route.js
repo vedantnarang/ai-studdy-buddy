@@ -32,6 +32,10 @@ export async function GET(request, context) {
     const topicObj = topic.toObject();
     topicObj.flashcards = flashcards;
 
+    // Attach count of quizzes generated for this topic
+    const quizCount = await Quiz.countDocuments({ topicId, userId: userPayload.userId });
+    topicObj.quizCount = quizCount;
+
     // Attach subject color for theming
     const subject = await Subject.findById(topic.subjectId).select('color').lean();
     if (subject) {

@@ -143,7 +143,7 @@ export const useTopic = (topicId) => {
     if (!topicId) return { success: false, error: "No topic ID" };
 
     try {
-      const res = await api.delete(`/topics/${topicId}/images/${imageId}`);
+      const res = await api.delete(`/topics/${topicId}/images?imageId=${encodeURIComponent(imageId)}`);
       const updatedTopic = res.data.data || res.data;
       setTopic(updatedTopic);
       toast.success('Image removed.');

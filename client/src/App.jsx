@@ -15,6 +15,7 @@ import SubjectFlashcardReview from './pages/SubjectFlashcardReview';
 import QuizStudy from './pages/QuizStudy';
 import QuizHistory from './pages/QuizHistory';
 import NotFound from './pages/NotFound';
+import Pricing from './pages/Pricing';
 import './App.css';
 
 function App() {
@@ -58,6 +59,7 @@ function App() {
                  <Route path="/topic/:id/summary" element={<TopicSummary />} />
                  <Route path="/topic/:id/flashcards" element={<FlashcardStudy />} />
                  <Route path="/topic/:id/quiz" element={<QuizStudy />} />
+                 <Route path="/pricing" element={<Pricing />} />
                  <Route path="/topic/:id/quiz-history" element={<QuizHistory />} />
                  
                  {/* Fallback 404 Route */}
