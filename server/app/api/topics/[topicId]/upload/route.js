@@ -5,6 +5,7 @@ import Topic from "@/models/Topic";
 import { PDFParse } from "pdf-parse"; 
 import { extractTextFromScannedPDF } from "@/services/ocr.service";
 import { uploadToCloudinary } from "@/lib/cloudinary";
+import { extractTextFromImageUrl } from "@/services/ai.service";
 
 // Check if pdf-parse output is meaningful text or just page markers / garbage
 function isTextMeaningful(text) {
@@ -99,25 +100,37 @@ export async function POST(request, { params }) {
         fileType = 'txt';
         extractedText = buffer.toString('utf-8');
       } else if (file.type.startsWith('image/')) {
-        // Image: upload to Cloudinary only (AI vision disabled for now)
+        // Image: upload to Cloudinary and extract text via Vision AI
         try {
           console.log(`Uploading image "${file.name}" to Cloudinary...`);
           const cloudinaryResult = await uploadToCloudinary(buffer, file.name);
           console.log(`Cloudinary upload succeeded: ${cloudinaryResult.url}`);
 
+          console.log(`Sending image to Vision AI to extract text...`);
+          let extractedText = '';
+          try {
+             extractedText = await extractTextFromImageUrl(cloudinaryResult.url);
+             console.log(`Vision AI extraction succeeded! Length: ${extractedText?.length}`);
+          } catch (visionError) {
+             console.warn(`Vision AI failed for ${file.name}:`, visionError.message);
+          }
+
           newImages.push({
             fileName: file.name,
             url: cloudinaryResult.url,
             publicId: cloudinaryResult.publicId,
-            extractedText: '', // To be filled later by async/batch job
+            extractedText: extractedText || '',
           });
 
           results.push({
             fileName: file.name,
             success: true,
-            extractionMethod: 'none',
+            extractionMethod: extractedText ? 'vision-ai' : 'none',
             imageUrl: cloudinaryResult.url,
-            extractedPreview: 'Image uploaded successfully. AI processing pending.',
+            extractedPreview: extractedText ? 
+              (extractedText.substring(0, 100) + (extractedText.length > 100 ? "..." : "")) : 
+              'Image uploaded. Text extraction pending or failed.',
+            extractedText: extractedText || ''
           });
         } catch (uploadError) {
           console.error(`Image upload failed for ${file.name}:`, uploadError.message);

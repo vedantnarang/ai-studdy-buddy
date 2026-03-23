@@ -70,6 +70,15 @@ const TopicDetail = () => {
     }
   };
 
+  const handleAppendToNotes = async (textToAppend) => {
+    if (!textToAppend?.trim()) return;
+    const newNotes = notes ? `${notes}\n\n${textToAppend}` : textToAppend;
+    setNotes(newNotes);
+    setIsSaving(true);
+    await updateNotes(newNotes);
+    setIsSaving(false);
+  };
+
   const handleDocumentDelete = async (e, documentId) => {
     e.stopPropagation();
     if (!window.confirm('Remove this document? This cannot be undone.')) return;
@@ -323,13 +332,16 @@ const TopicDetail = () => {
 
       </div>
 
-      {/* Document Content Modal (Preserved logic for OCR viewing) */}
-      <DocumentModal
-        document={selectedDoc}
-        onClose={() => setSelectedDoc(null)}
-        onSave={handleDocumentSave}
-        saving={savingDoc}
-      />
+      {/* Document Viewer/Editor Modal */}
+      {selectedDoc && (
+        <DocumentModal 
+          document={selectedDoc} 
+          onClose={() => setSelectedDoc(null)} 
+          onSave={handleDocumentSave}
+          onAppendToNotes={handleAppendToNotes}
+          saving={savingDoc} 
+        />
+      )}
     </div>
   );
 };

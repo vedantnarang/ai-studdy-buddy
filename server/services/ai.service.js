@@ -39,23 +39,19 @@ async function withFallback(aiCall) {
 }
 
 async function withVisionFallback(fn) {
-  // 402 is OpenRouter's "Payment Required" or "Credit Limit Reached" error
-  const retryableCodes = [429, 503, 502, 402];
+  let lastError;
   
   for (const modelId of VISION_MODELS) {
     try {
       return await fn(modelId);
     } catch (error) {
-      const code = error.statusCode || error.status;
-      if (retryableCodes.includes(code)) {
-        console.warn(`Vision model ${modelId} failed with ${code}, trying next...`);
-        continue;
-      }
-      throw error; 
+      console.warn(`Vision model ${modelId} failed with ${error.statusCode || error.status || 'Error'}: ${error.message}, trying next...`);
+      lastError = error;
+      continue;
     }
   }
   
-  throw new Error("All vision models are currently unavailable. Please try again shortly.");
+  throw new Error(`All vision models are currently unavailable. Last failure: ${lastError?.message || 'Unknown'}`);
 }
 
 
@@ -172,21 +168,22 @@ export async function extractTextFromImage(buffer, mimeType) {
 }
 
 export async function extractTextFromImageUrl(imageUrl) {
-  const { text } = await withFallback((model) => 
-    generateText({
-      model,
+  return await withVisionFallback(async (modelId) => {
+    const { text } = await generateText({
+      model: openrouter(modelId),
       messages: [
         {
           role: 'user',
           content: [
-            { type: 'text', text: 'Extract all text from this image. Organize logically.' },
-            { type: 'image', image: new URL(imageUrl) },
-          ],
-        },
+            { type: 'text', text: 'Extract and return all the readable text from this image. Do not include any conversational filler, markdown formatting blocks, or explanations. Just output the raw extracted text as accurately as possible.' },
+            { type: 'image', image: new URL(imageUrl) }
+          ]
+        }
       ],
-    })
-  );
-  return text;
+      maxTokens: 1500,
+    });
+    return text.trim();
+  });
 }
 
 export async function generateFlashcardsFromImage(imageBuffer, mimeType, count = 10) {
@@ -232,3 +229,4 @@ export async function generateQuizFromImage(imageBuffer, mimeType, count = 5) {
   );
   return object.questions;
 }
+
