@@ -139,6 +139,21 @@ export const useTopic = (topicId) => {
     }
   };
 
+  const deleteImage = async (imageId) => {
+    if (!topicId) return { success: false, error: "No topic ID" };
+
+    try {
+      const res = await api.delete(`/topics/${topicId}/images/${imageId}`);
+      const updatedTopic = res.data.data || res.data;
+      setTopic(updatedTopic);
+      toast.success('Image removed.');
+      return { success: true };
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to delete image');
+      return { success: false, error: err.response?.data?.message || err.message };
+    }
+  };
+
   return { 
     topic, 
     setTopic,
@@ -152,5 +167,6 @@ export const useTopic = (topicId) => {
     uploadDocuments,
     updateDocumentText,
     deleteDocument,
+    deleteImage,
   };
 };

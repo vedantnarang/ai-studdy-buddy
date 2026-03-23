@@ -15,7 +15,7 @@ const TopicDetail = () => {
   const navigate = useNavigate();
   const { 
     topic, setTopic, loading, error, 
-    updateNotes, uploadDocuments, updateDocumentText, deleteDocument 
+    updateNotes, uploadDocuments, updateDocumentText, deleteDocument, deleteImage
   } = useTopic(id);
   
   const [notes, setNotes] = useState('');
@@ -74,6 +74,12 @@ const TopicDetail = () => {
     e.stopPropagation();
     if (!window.confirm('Remove this document? This cannot be undone.')) return;
     await deleteDocument(documentId);
+  };
+
+  const handleImageDelete = async (e, imageId) => {
+    e.stopPropagation();
+    if (!window.confirm('Remove this image? This cannot be undone.')) return;
+    await deleteImage(imageId);
   };
 
   const handleAIGenerated = (updatedTopic) => {
@@ -187,6 +193,12 @@ const TopicDetail = () => {
                         <span className="font-mono uppercase">image</span>
                       </p>
                     </div>
+                    <button
+                      onClick={(e) => handleImageDelete(e, img._id)}
+                      className="opacity-0 group-hover:opacity-100 absolute top-3 right-3 p-2 text-outline-variant hover:text-error rounded-full hover:bg-error-container/50 transition-all"
+                    >
+                      <span className="material-symbols-outlined text-lg">delete</span>
+                    </button>
                   </div>
                 ))}
 
