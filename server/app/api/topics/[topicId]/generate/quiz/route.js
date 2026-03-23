@@ -41,7 +41,7 @@ export async function POST(request, { params }) {
 
     // DB cache: return existing quiz unless forcing regeneration
     if (topic.generationStatus.hasQuiz && !forceRegenerate) {
-      const existingQuiz = await Quiz.findOne({ topicId, userId: userPayload.userId });
+      const existingQuiz = await Quiz.findOne({ topicId, userId: userPayload.userId }).sort({ createdAt: -1 });
       return successResponse({ quiz: existingQuiz, cached: true });
     }
 

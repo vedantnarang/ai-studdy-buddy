@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTopic } from '../hooks/useTopic';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 const QuizHistory = () => {
   const { id } = useParams();
@@ -26,6 +27,17 @@ const QuizHistory = () => {
     };
     if (id) fetchHistory();
   }, [id]);
+
+  const handleDeleteQuiz = async (quizId) => {
+    if (!window.confirm("Are you sure you want to delete this quiz and its history?")) return;
+    try {
+      await api.delete(`/topics/${id}/quizzes/${quizId}`);
+      setAttempts(prev => prev.filter(group => group.quizId !== quizId));
+      toast.success("Quiz deleted successfully");
+    } catch (err) {
+      toast.error("Failed to delete quiz");
+    }
+  };
 
   if (topicLoading || loading) {
     return (
@@ -145,9 +157,18 @@ const QuizHistory = () => {
                         {group.totalAttempts} attempt{group.totalAttempts !== 1 ? 's' : ''} total
                       </p>
                     </div>
-                    <span className={`${badge.bg} ${badge.text} text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider`}>
-                      {badge.label}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className={`${badge.bg} ${badge.text} text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider`}>
+                        {badge.label}
+                      </span>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleDeleteQuiz(group.quizId); }}
+                        className="text-outline hover:text-error transition-colors p-1.5 rounded-full hover:bg-error/10 flex items-center justify-center"
+                        title="Delete Quiz"
+                      >
+                        <span className="material-symbols-outlined text-sm">delete</span>
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-8 mb-8 pl-4">

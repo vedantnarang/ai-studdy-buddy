@@ -16,7 +16,7 @@ export async function GET(request, { params }) {
       return errorResponse("Invalid topic ID", "VALIDATION_ERROR", 400);
     }
 
-    const quiz = await Quiz.findOne({ topicId, userId: userPayload.userId });
+    const quiz = await Quiz.findOne({ topicId, userId: userPayload.userId }).sort({ createdAt: -1 });
     
     if (!quiz) {
       return errorResponse("No quiz found for this topic.", "NOT_FOUND", 404);
