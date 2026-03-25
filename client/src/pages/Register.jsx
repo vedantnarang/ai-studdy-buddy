@@ -25,7 +25,7 @@ const Register = () => {
 
   return (
     <div className="flex justify-center items-center min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-gray-800 rounded-xl  border border-gray-100 dark:border-gray-700 shadow-lg shadow-purple-500">
         <div className="text-center">
           <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">Create an Account</h2>
           <p className="mt-2 text-gray-500 dark:text-gray-400">Join Study Buddy today!</p>
@@ -45,7 +45,7 @@ const Register = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="mt-1 block w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors shadow-sm"
-              placeholder="John Doe"
+              placeholder="Enter your name"
               required 
             />
           </div>
@@ -56,7 +56,7 @@ const Register = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="mt-1 block w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors shadow-sm"
-              placeholder="you@example.com"
+              placeholder="Enter your email"
               required 
             />
           </div>
@@ -82,7 +82,7 @@ const Register = () => {
         </form>
 
         <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-          Already have an account?{' '}
+          Already have an account?
           <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
             Sign in
           </Link>

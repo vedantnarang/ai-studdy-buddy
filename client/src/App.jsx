@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import AppLayout from './components/AppLayout';
+import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import SubjectsList from './pages/SubjectsList';
@@ -40,10 +41,9 @@ function App() {
       />
       <AuthProvider>
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          
-          {/* Public Routes (Guests only) */}
+          {/* Landing page for guests, redirect to dashboard for authenticated */}
           <Route element={<PublicRoute />}>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
           </Route>

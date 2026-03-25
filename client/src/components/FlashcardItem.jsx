@@ -15,7 +15,7 @@ const FlashcardItem = ({ card, isFlipped, onFlip, themeColor }) => {
 
       {/* The 3D Rotating Container */}
       <div
-        className="relative w-full h-full rounded-[2rem] flex flex-col transition-transform duration-500 hover:scale-[1.01] active:scale-[0.99] shadow-lg dark:shadow-none"
+        className="relative w-full h-full rounded-[2rem] flex flex-col transition-transform duration-500 hover:scale-[1.01] active:scale-[0.99]"
         style={{
           transformStyle: "preserve-3d",
           transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
