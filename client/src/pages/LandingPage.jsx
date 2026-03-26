@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import DarkModeToggle from '../components/DarkModeToggle';
 import './LandingPage.css';
 
 const LandingPage = () => {
@@ -14,6 +15,7 @@ const LandingPage = () => {
           <li><a href="#how-it-works">How It Works</a></li>
           <li><a href="#testimonials">Testimonials</a></li>
           <li><Link to="/login">Log In</Link></li>
+          <li><DarkModeToggle /></li>
           <li>
             <Link to="/register" className="nav-cta">Get Started</Link>
           </li>

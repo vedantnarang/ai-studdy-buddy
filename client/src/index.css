@@ -5,13 +5,14 @@
    To activate dark mode: document.documentElement.classList.add('dark')
    To deactivate:         document.documentElement.classList.remove('dark') */
 
+@variant dark (&:where(.dark, .dark *));
 
 @theme {
   --color-on-error: #fff7f6;
   --color-on-tertiary-container: #514d68;
   --color-outline: #717c82;
   --color-surface-variant: #d9e4ea;
-  --color-background: #f7f9fb;
+  --color-background: var(--bg);
   --color-on-secondary-fixed: #314055;
   --color-tertiary: #605c78;
   --color-inverse-on-surface: #9a9d9f;
@@ -28,11 +29,11 @@
   --color-primary-fixed: #dbe1ff;
   --color-outline-variant: #a9b4b9;
   --color-secondary-fixed: #d3e4fe;
-  --color-on-background: #2a3439;
+  --color-on-background: var(--text);
   --color-secondary-fixed-dim: #c5d6f0;
   --color-surface-container-low: #f0f4f7;
   --color-surface-tint: #0053db;
-  --color-surface: #f7f9fb;
+  --color-surface: var(--bg);
   --color-primary-fixed-dim: #c7d3ff;
   --color-tertiary-fixed: #e3dbfd;
   --color-error: #9f403d;
@@ -51,10 +52,10 @@
   --color-secondary: #506076;
   --color-secondary-container: #d3e4fe;
   --color-on-primary: #f8f7ff;
-  --color-on-surface: #2a3439;
+  --color-on-surface: var(--text);
   --color-on-secondary-fixed-variant: #4d5d73;
   --color-on-secondary-container: #435368;
-  --color-surface-bright: #f7f9fb;
+  --color-surface-bright: var(--bg);
   --color-on-primary-fixed: #003798;
   --color-on-tertiary-fixed-variant: #5b5672;
   --color-tertiary-fixed-dim: #d4cdee;
@@ -105,7 +106,7 @@
 }
 
 /* Dark mode — activated by adding class="dark" to <html> */
-.dark :root {
+.dark {
   color-scheme: dark;
   --text: #9ca3af;
   --text-h: #f3f4f6;

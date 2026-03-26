@@ -2,6 +2,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAnalytics } from '../hooks/useAnalytics';
 import { useState } from 'react';
+import DarkModeToggle from './DarkModeToggle';
 
 const AppLayout = () => {
   const { user, logout } = useAuth();
@@ -88,7 +89,10 @@ const AppLayout = () => {
             <span className="font-bold hidden sm:inline">{streak} day streak</span>
             <span className="font-bold sm:hidden">{streak}</span>
           </div>
-          
+
+          {/* Dark Mode Toggle */}
+          <DarkModeToggle />
+
           {/* Profile Circle */}
           <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shadow-sm shadow-blue-500/20">
             {user?.name ? user.name.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'S')}
