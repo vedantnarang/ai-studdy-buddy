@@ -13,35 +13,32 @@ const EmptyMetricState = ({ icon, title, message }) => (
         {icon}
       </span>
     </div>
-    <p className="text-base font-bold text-on-surface">
-      {title}
-    </p>
-    <p className="text-sm text-on-surface-variant mt-1 max-w-sm">
-      {message}
-    </p>
+    <p className="text-base font-bold text-on-surface">{title}</p>
+    <p className="text-sm text-on-surface-variant mt-1 max-w-sm">{message}</p>
   </div>
 );
 
 const SubjectsList = () => {
   const { user } = useAuth();
-  const { subjects, loading, error, createSubject, deleteSubject } = useSubjects();
-  
+  const { subjects, loading, error, createSubject, deleteSubject } =
+    useSubjects();
+
   // Metrics & Analytics
   const [activeMetricTab, setActiveMetricTab] = useState("weakness");
-  const { 
-    weakTopics, 
-    forgottenTopics, 
-    materialGaps, 
+  const {
+    weakTopics,
+    forgottenTopics,
+    materialGaps,
     subjectReadiness,
     loading: analyticsLoading,
     error: analyticsError,
-    refresh: refreshAnalytics
+    refresh: refreshAnalytics,
   } = useAnalytics();
 
   const [isCreating, setIsCreating] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
-  const [newColor, setNewColor] = useState("#0053db"); 
+  const [newColor, setNewColor] = useState("#0053db");
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState("");
 
@@ -61,7 +58,7 @@ const SubjectsList = () => {
       setIsCreating(false);
       setNewTitle("");
       setNewDescription("");
-      refreshAnalytics(); 
+      refreshAnalytics();
     } else {
       setCreateError(result.error);
     }
@@ -107,10 +104,9 @@ const SubjectsList = () => {
       {/* Welcome Header */}
       <header className="mb-12">
         <h2 className="text-3xl md:text-4xl font-extrabold font-headline tracking-tight text-on-surface mb-2">
-          Welcome back, {
-            (user?.name?.split(" ")[0] || "Scholar").charAt(0).toUpperCase() + 
-            (user?.name?.split(" ")[0] || "Scholar").slice(1)
-          }
+          Welcome back,{" "}
+          {(user?.name?.split(" ")[0] || "Scholar").charAt(0).toUpperCase() +
+            (user?.name?.split(" ")[0] || "Scholar").slice(1)}
         </h2>
         <p className="text-tertiary font-medium">
           Ready for your deep study session today?
@@ -170,14 +166,22 @@ const SubjectsList = () => {
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-wrap gap-2.5">
                       {[
-                        "#0053db", "#7c3aed", "#db2777", "#ea580c", "#16a34a", "#0891b2", "#4b5563",
+                        "#0053db",
+                        "#7c3aed",
+                        "#db2777",
+                        "#ea580c",
+                        "#16a34a",
+                        "#0891b2",
+                        "#4b5563",
                       ].map((preset) => (
                         <button
                           key={preset}
                           type="button"
                           onClick={() => setNewColor(preset)}
                           className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 active:scale-95 ${
-                            newColor === preset ? "border-on-surface scale-110 shadow-md" : "border-transparent"
+                            newColor === preset
+                              ? "border-on-surface scale-110 shadow-md"
+                              : "border-transparent"
                           }`}
                           style={{ backgroundColor: preset }}
                           title={preset}
@@ -186,10 +190,14 @@ const SubjectsList = () => {
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="relative group cursor-pointer">
-                        <div 
+                        <div
                           className="w-12 h-12 rounded-full border-2 border-white dark:border-gray-700 shadow-sm transition-transform group-hover:scale-105"
                           style={{ backgroundColor: newColor }}
-                          onClick={() => document.getElementById('custom-color-picker').click()}
+                          onClick={() =>
+                            document
+                              .getElementById("custom-color-picker")
+                              .click()
+                          }
                         />
                         <input
                           id="custom-color-picker"
@@ -201,12 +209,16 @@ const SubjectsList = () => {
                       </div>
                       <div className="flex-1">
                         <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-mono text-sm">#</span>
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-mono text-sm">
+                            #
+                          </span>
                           <input
                             type="text"
-                            value={newColor.replace('#', '')}
+                            value={newColor.replace("#", "")}
                             onChange={(e) => {
-                              const val = e.target.value.replace(/[^0-9A-Fa-f]/g, '').slice(0, 6);
+                              const val = e.target.value
+                                .replace(/[^0-9A-Fa-f]/g, "")
+                                .slice(0, 6);
                               setNewColor(`#${val}`);
                             }}
                             placeholder="FFFFFF"
@@ -263,26 +275,32 @@ const SubjectsList = () => {
               Your Knowledge Hub is Ready
             </h3>
             <p className="text-on-surface-variant mb-10 max-w-sm mx-auto text-center leading-relaxed font-medium p-2">
-              Start by creating your first subject. We'll help you organize notes, 
-              generate AI flashcards, and master your topics.
+              Start by creating your first subject. We'll help you organize
+              notes, generate AI flashcards, and master your topics.
             </p>
             <button
               onClick={() => setIsCreating(true)}
               className="group flex items-center border-3 border-blue-100 gap-2 px-8 py-3.5 bg-primary text-on-primary font-bold rounded-2xl hover:bg-primary-dim transition-all hover:shadow-lg hover:shadow-blue-200/50 active:scale-95 gradient-text"
             >
-              <span className="material-symbols-outlined text-[20px] ">add</span>
+              <span className="material-symbols-outlined text-[20px] ">
+                add
+              </span>
               Start Your First Subject
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8 ">
             {subjects.map((subject) => {
               const accentColor = subject.color || "#0053db";
+              const shadowColor = `${accentColor}40`;
               return (
                 <Link
                   to={`/subject/${subject._id}`}
                   key={subject._id}
-                  className="bg-surface-container-lowest p-6 lg:p-8 rounded-2xl flex flex-col relative overflow-hidden group hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-gray-100 dark:border-gray-800"
+                  className="bg-surface-container-lowest p-6 lg:p-8 rounded-2xl flex flex-col relative overflow-hidden group hover:shadow-(--hover-shadow) hover:-translate-y-1 transition-all duration-300 border-2 border-gray-100 dark:border-gray-800"
+                  style={{
+                    "--hover-shadow": `0 10px 15px -3px ${shadowColor}, 0 4px 6px -4px ${shadowColor}`,
+                  }}
                 >
                   <div
                     className="absolute left-0 top-0 bottom-0 w-1.5"
@@ -297,14 +315,18 @@ const SubjectsList = () => {
                         color: accentColor,
                       }}
                     >
-                      {subject.title ? subject.title.charAt(0).toUpperCase() : "S"}
+                      {subject.title
+                        ? subject.title.charAt(0).toUpperCase()
+                        : "S"}
                     </div>
                     <button
                       onClick={(e) => handleDeleteClick(e, subject._id)}
                       className="text-gray-400 hover:text-error opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-full hover:bg-error-container"
                       title="Delete Subject"
                     >
-                      <span className="material-symbols-outlined text-xl">delete</span>
+                      <span className="material-symbols-outlined text-xl">
+                        delete
+                      </span>
                     </button>
                   </div>
 
@@ -318,7 +340,7 @@ const SubjectsList = () => {
 
                   <div className="mt-auto pt-4 border-t border-gray-50 dark:border-gray-800/50 flex flex-col gap-2">
                     <button
-                      className="w-full py-2.5 text-xs font-bold uppercase tracking-widest rounded-xl transition-all border-3"
+                      className="w-full py-2.5 text-xs font-bold uppercase tracking-widest rounded-xl transition-all border-3 cursor-pointer"
                       style={{
                         color: accentColor,
                         borderColor: getTint(accentColor, "20"),
@@ -341,7 +363,9 @@ const SubjectsList = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
               <div>
                 <h3 className="text-xl font-bold font-headline text-on-surface flex items-center gap-2">
-                  <span className="material-symbols-outlined text-amber-500">insights</span>
+                  <span className="material-symbols-outlined text-amber-500">
+                    insights
+                  </span>
                   Focus & Insights
                 </h3>
                 <p className="text-sm text-on-surface-variant mt-1">
@@ -365,7 +389,9 @@ const SubjectsList = () => {
                         : "text-on-surface-variant hover:bg-surface-container-low"
                     }`}
                   >
-                    <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
+                    <span className="material-symbols-outlined text-[18px]">
+                      {tab.icon}
+                    </span>
                     {tab.label}
                   </button>
                 ))}
@@ -376,7 +402,9 @@ const SubjectsList = () => {
               {analyticsLoading ? (
                 <div className="flex flex-col items-center justify-center py-12">
                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mb-4"></div>
-                  <p className="text-sm font-medium text-on-surface-variant">Analyzing your progress...</p>
+                  <p className="text-sm font-medium text-on-surface-variant">
+                    Analyzing your progress...
+                  </p>
                 </div>
               ) : (
                 <>
@@ -385,22 +413,35 @@ const SubjectsList = () => {
                       {weakTopics.length > 0 ? (
                         <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {weakTopics.map((topic) => (
-                            <li key={topic.id} className="flex flex-col gap-2 p-4 rounded-xl bg-surface-container-low border border-gray-50 dark:border-gray-700">
+                            <li
+                              key={topic.id}
+                              className="flex flex-col gap-2 p-4 rounded-xl bg-surface-container-low border border-gray-50 dark:border-gray-700"
+                            >
                               <div className="flex justify-between items-center mb-1">
-                                <span className="text-sm font-bold text-on-surface truncate pr-4">{topic.title}</span>
-                                <span className="text-xs font-black text-error">{Math.round(topic.avgScore)}%</span>
+                                <span className="text-sm font-bold text-on-surface truncate pr-4">
+                                  {topic.title}
+                                </span>
+                                <span className="text-xs font-black text-error">
+                                  {Math.round(topic.avgScore)}%
+                                </span>
                               </div>
                               <div className="w-full h-2.5 bg-surface-container-high rounded-full overflow-hidden">
                                 <div
                                   className="h-full bg-error transition-all duration-1000 ease-out"
-                                  style={{ width: `${Math.max(10, topic.avgScore)}%` }}
+                                  style={{
+                                    width: `${Math.max(10, topic.avgScore)}%`,
+                                  }}
                                 ></div>
                               </div>
                             </li>
                           ))}
                         </ul>
                       ) : (
-                        <EmptyMetricState icon="done_all" title="Master of all!" message="No weak spots detected. Your recent quiz scores are consistently above 70%." />
+                        <EmptyMetricState
+                          icon="done_all"
+                          title="Master of all!"
+                          message="No weak spots detected. Your recent quiz scores are consistently above 70%."
+                        />
                       )}
                     </div>
                   )}
@@ -410,22 +451,43 @@ const SubjectsList = () => {
                       {forgottenTopics.length > 0 ? (
                         <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {forgottenTopics.map((topic) => (
-                            <li key={topic.id} className="flex items-center justify-between p-4 rounded-xl bg-surface-container-low border border-amber-100 dark:border-amber-900/30">
+                            <li
+                              key={topic.id}
+                              className="flex items-center justify-between p-4 rounded-xl bg-surface-container-low border border-amber-100 dark:border-amber-900/30"
+                            >
                               <div className="flex items-center gap-4">
                                 <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                                  <span className="material-symbols-outlined text-amber-600 dark:text-amber-400">timer</span>
+                                  <span className="material-symbols-outlined text-amber-600 dark:text-amber-400">
+                                    timer
+                                  </span>
                                 </div>
                                 <div>
-                                  <p className="text-sm font-bold text-on-surface">{topic.title}</p>
-                                  <p className="text-[10px] text-tertiary mt-0.5">Last review: {new Date(topic.lastReviewed).toLocaleDateString()}</p>
+                                  <p className="text-sm font-bold text-on-surface">
+                                    {topic.title}
+                                  </p>
+                                  <p className="text-[10px] text-tertiary mt-0.5">
+                                    Last review:{" "}
+                                    {new Date(
+                                      topic.lastReviewed,
+                                    ).toLocaleDateString()}
+                                  </p>
                                 </div>
                               </div>
-                              <Link to={`/topic/${topic.id}`} className="px-3 py-1.5 bg-amber-500 text-white text-[10px] font-black uppercase rounded-lg hover:bg-amber-600 transition-colors">Review</Link>
+                              <Link
+                                to={`/topic/${topic.id}`}
+                                className="px-3 py-1.5 bg-amber-500 text-white text-[10px] font-black uppercase rounded-lg hover:bg-amber-600 transition-colors"
+                              >
+                                Review
+                              </Link>
                             </li>
                           ))}
                         </ul>
                       ) : (
-                        <EmptyMetricState icon="auto_awesome" title="Memory is Fresh" message="No topics found that haven't been reviewed in 4+ days. Great consistency!" />
+                        <EmptyMetricState
+                          icon="auto_awesome"
+                          title="Memory is Fresh"
+                          message="No topics found that haven't been reviewed in 4+ days. Great consistency!"
+                        />
                       )}
                     </div>
                   )}
@@ -435,46 +497,81 @@ const SubjectsList = () => {
                       {materialGaps.length > 0 ? (
                         <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {materialGaps.map((topic) => (
-                            <li key={topic.id} className="p-4 rounded-xl bg-surface-container-low border border-blue-50 dark:border-blue-900/10">
-                              <p className="text-sm font-bold text-on-surface mb-3">{topic.title}</p>
+                            <li
+                              key={topic.id}
+                              className="p-4 rounded-xl bg-surface-container-low border border-blue-50 dark:border-blue-900/10"
+                            >
+                              <p className="text-sm font-bold text-on-surface mb-3">
+                                {topic.title}
+                              </p>
                               <div className="flex gap-2">
-                                {topic.missing.flashcards && <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-bold rounded-md">No Flashcards</span>}
-                                {topic.missing.quiz && <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-[10px] font-bold rounded-md">No Quiz</span>}
+                                {topic.missing.flashcards && (
+                                  <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-bold rounded-md">
+                                    No Flashcards
+                                  </span>
+                                )}
+                                {topic.missing.quiz && (
+                                  <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-[10px] font-bold rounded-md">
+                                    No Quiz
+                                  </span>
+                                )}
                               </div>
                             </li>
                           ))}
                         </ul>
                       ) : (
-                        <EmptyMetricState icon="library_add_check" title="Fully Equipped" message="All your topics with notes have generated study materials. You're ready to go!" />
+                        <EmptyMetricState
+                          icon="library_add_check"
+                          title="Fully Equipped"
+                          message="All your topics with notes have generated study materials. You're ready to go!"
+                        />
                       )}
                     </div>
                   )}
 
                   {activeMetricTab === "readiness" && (
                     <div className="animate-in fade-in duration-500">
-                      {subjectReadiness.some(s => s.sessionCount > 0) ? (
+                      {subjectReadiness.some((s) => s.sessionCount > 0) ? (
                         <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {subjectReadiness.filter(s => s.sessionCount > 0).map((sub) => (
-                            <li key={sub.title} className="p-4 rounded-xl bg-surface-container-low border border-gray-100 dark:border-gray-800">
-                              <div className="flex justify-between items-center mb-3">
-                                <span className="text-sm font-bold text-on-surface">{sub.title}</span>
-                                <span className="text-xs font-black" style={{ color: sub.color }}>{sub.readiness}% Readiness</span>
-                              </div>
-                              <div className="w-full h-3 bg-surface-container-high rounded-full overflow-hidden p-0.5">
-                                <div
-                                  className="h-full rounded-full transition-all duration-1000 ease-out"
-                                  style={{ 
-                                    width: `${Math.max(5, sub.readiness)}%`,
-                                    backgroundColor: sub.color
-                                  }}
-                                ></div>
-                              </div>
-                              <p className="text-[10px] text-on-surface-variant mt-2">Based on {sub.sessionCount} sessions</p>
-                            </li>
-                          ))}
+                          {subjectReadiness
+                            .filter((s) => s.sessionCount > 0)
+                            .map((sub) => (
+                              <li
+                                key={sub.title}
+                                className="p-4 rounded-xl bg-surface-container-low border border-gray-100 dark:border-gray-800"
+                              >
+                                <div className="flex justify-between items-center mb-3">
+                                  <span className="text-sm font-bold text-on-surface">
+                                    {sub.title}
+                                  </span>
+                                  <span
+                                    className="text-xs font-black"
+                                    style={{ color: sub.color }}
+                                  >
+                                    {sub.readiness}% Readiness
+                                  </span>
+                                </div>
+                                <div className="w-full h-3 bg-surface-container-high rounded-full overflow-hidden p-0.5">
+                                  <div
+                                    className="h-full rounded-full transition-all duration-1000 ease-out"
+                                    style={{
+                                      width: `${Math.max(5, sub.readiness)}%`,
+                                      backgroundColor: sub.color,
+                                    }}
+                                  ></div>
+                                </div>
+                                <p className="text-[10px] text-on-surface-variant mt-2">
+                                  Based on {sub.sessionCount} sessions
+                                </p>
+                              </li>
+                            ))}
                         </ul>
                       ) : (
-                        <EmptyMetricState icon="analytics" title="Need Data" message="Take more quizzes to see your overall subject readiness scores!" />
+                        <EmptyMetricState
+                          icon="analytics"
+                          title="Need Data"
+                          message="Take more quizzes to see your overall subject readiness scores!"
+                        />
                       )}
                     </div>
                   )}
