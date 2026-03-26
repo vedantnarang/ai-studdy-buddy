@@ -1,5 +1,11 @@
+import mongoose from "mongoose";
 import { connectDB } from "@/lib/db";
 import Subject from "@/models/Subject";
+import Topic from "@/models/Topic";
+import Flashcard from "@/models/Flashcard";
+import Quiz from "@/models/Quiz";
+import QuizAttempt from "@/models/QuizAttempt";
+import Session from "@/models/Session";
 import { getAuthUser } from "@/lib/authHelper";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
 import { subjectSchema } from "@/schemas/subject.schema";
@@ -82,19 +88,54 @@ export async function DELETE(request, { params }) {
     if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
 
     await connectDB();
-    const {subjectId} = await params;
+    const { subjectId } = await params;
+    
+    // Explicitly cast to ObjectId for robustness in queries
+    const sId = new mongoose.Types.ObjectId(subjectId);
 
-    // Only delete if Both ID and User ID match
-    const deletedSubject = await Subject.findOneAndDelete({ 
-      _id: subjectId, 
+    // 1. Verify the subject exists and belongs to the user
+    const subject = await Subject.findOne({ 
+      _id: sId, 
       userId: userPayload.userId 
     });
 
-    if (!deletedSubject) {
+    if (!subject) {
       return errorResponse("Subject not found or unauthorized to delete.", "NOT_FOUND", 404);
     }
 
-    return successResponse({ message: "Subject deleted successfully", subjectId }, 200);
+    // 2. Find all topics associated with this subject
+    const topics = await Topic.find({ subjectId: sId, userId: userPayload.userId });
+    const topicIds = topics.map(t => t._id);
+
+    console.log(`Cascading delete for subject ${subjectId}: found ${topics.length} topics`);
+
+    // 3. Delete all metadata associated with these topics
+    if (topicIds.length > 0) {
+      const results = await Promise.all([
+        Flashcard.deleteMany({ topicId: { $in: topicIds }, userId: userPayload.userId }),
+        Quiz.deleteMany({ topicId: { $in: topicIds }, userId: userPayload.userId }),
+        QuizAttempt.deleteMany({ topicId: { $in: topicIds }, userId: userPayload.userId }),
+        Session.deleteMany({ topicId: { $in: topicIds }, userId: userPayload.userId }),
+        Topic.deleteMany({ _id: { $in: topicIds }, userId: userPayload.userId })
+      ]);
+
+      console.log(`Deleted metadata for ${topicIds.length} topics:`, {
+        flashcards: results[0].deletedCount,
+        quizzes: results[1].deletedCount,
+        attempts: results[2].deletedCount,
+        sessions: results[3].deletedCount,
+        topics: results[4].deletedCount
+      });
+    }
+
+    // 5. Finally delete the subject
+    await Subject.findByIdAndDelete(sId);
+    console.log(`Successfully deleted subject ${subjectId}`);
+
+    return successResponse({ 
+      message: "Subject and all associated data deleted successfully", 
+      subjectId 
+    }, 200);
 
   } catch (error) {
     console.error("DELETE subject error:", error);

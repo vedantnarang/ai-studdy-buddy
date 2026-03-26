@@ -2,101 +2,111 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 export const useAnalytics = () => {
-  const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [stats, setStats] = useState({
     streak: 0,
     weakTopics: [],
-    totalSessions: 0
+    totalSessions: 0,
+    forgottenTopics: [],
+    materialGaps: [],
+    subjectReadiness: []
   });
 
-  const fetchSessions = useCallback(async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await api.get('/sessions');
-      const data = res.data.data || res.data.sessions || res.data;
-      setSessions(Array.isArray(data) ? data : []);
+      setError(null);
+      
+      // Fetch both sessions (for streak) and new analytics
+      const [sessionsRes, analyticsRes] = await Promise.all([
+        api.get('/sessions'),
+        api.get('/analytics')
+      ]);
+
+      const sessions = sessionsRes.data.data || [];
+      const analytics = analyticsRes.data.data || {};
+
+      // Calculate Streak (Client-side for now to keep existing logic)
+      const calculateStreak = (sessionsList) => {
+        if (!sessionsList || sessionsList.length === 0) return 0;
+        const dates = sessionsList.map(s => new Date(s.createdAt).toDateString());
+        const uniqueDates = [...new Set(dates)].map(d => new Date(d));
+        uniqueDates.sort((a, b) => b - a);
+
+        let streakCount = 0;
+        let current = new Date();
+        current.setHours(0, 0, 0, 0);
+
+        const todayStr = current.toDateString();
+        const yesterdayStr = new Date(current.getTime() - 86400000).toDateString();
+
+        const hasToday = dates.includes(todayStr);
+        const hasYesterday = dates.includes(yesterdayStr);
+
+        if (!hasToday && !hasYesterday) return 0;
+
+        let checkDate = hasToday ? current : new Date(current.getTime() - 86400000);
+
+        for (let i = 0; i < uniqueDates.length; i++) {
+          const sessionDate = uniqueDates[i];
+          if (sessionDate.toDateString() === checkDate.toDateString()) {
+            streakCount++;
+            checkDate.setDate(checkDate.getDate() - 1);
+          } else {
+            break;
+          }
+        }
+        return streakCount;
+      };
+
+      // Calculate Weak Topics
+      const calculateWeakTopics = (sessionsList) => {
+        const topicStats = {};
+        
+        // Filter out sessions with orphaned topicId
+        const validSessions = sessionsList.filter(s => s.topicId);
+
+        validSessions.forEach(s => {
+          const tId = s.topicId?._id || s.topicId;
+          const tTitle = s.topicId?.title || 'Unknown Topic';
+          
+          if (!topicStats[tId]) {
+            topicStats[tId] = { id: tId, title: tTitle, totalScore: 0, count: 0 };
+          }
+          topicStats[tId].totalScore += (s.score / s.totalQuestions) * 100;
+          topicStats[tId].count++;
+        });
+
+        return Object.values(topicStats)
+          .map(topic => ({
+            ...topic,
+            avgScore: topic.totalScore / topic.count
+          }))
+          .filter(topic => topic.avgScore < 70) 
+          .sort((a, b) => a.avgScore - b.avgScore);
+      };
+
+      setStats({
+        streak: calculateStreak(sessions),
+        weakTopics: calculateWeakTopics(sessions),
+        totalSessions: sessions.length,
+        forgottenTopics: analytics.forgottenTopics || [],
+        materialGaps: analytics.materialGaps || [],
+        subjectReadiness: analytics.subjectReadiness || []
+      });
+
     } catch (err) {
-      console.error('Failed to fetch sessions:', err);
+      console.error('Analytics Fetch Error:', err);
+      setError('Failed to load study insights');
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchSessions();
-  }, [fetchSessions]);
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
-  useEffect(() => {
-    if (sessions.length === 0) return;
-
-    // Calculate Streak
-    const calculateStreak = (sessions) => {
-      const dates = sessions.map(s => new Date(s.createdAt).toDateString());
-      const uniqueDates = [...new Set(dates)].map(d => new Date(d));
-      uniqueDates.sort((a, b) => b - a); // Descending
-
-      let streak = 0;
-      let current = new Date();
-      current.setHours(0, 0, 0, 0);
-
-      const todayStr = current.toDateString();
-      const yesterdayStr = new Date(current.getTime() - 86400000).toDateString();
-
-      // Check if there's a session today or yesterday to start the streak
-      const hasToday = dates.includes(todayStr);
-      const hasYesterday = dates.includes(yesterdayStr);
-
-      if (!hasToday && !hasYesterday) return 0;
-
-      // Start from the most recent session date
-      let checkDate = hasToday ? current : new Date(current.getTime() - 86400000);
-
-      for (let i = 0; i < uniqueDates.length; i++) {
-        const sessionDate = uniqueDates[i];
-        if (sessionDate.toDateString() === checkDate.toDateString()) {
-          streak++;
-          checkDate.setDate(checkDate.getDate() - 1);
-        } else {
-          break;
-        }
-      }
-      return streak;
-    };
-
-    // Calculate Weak Topics (Score < 70% on average)
-    const calculateWeakTopics = (sessions) => {
-      const topicStats = {};
-      
-      sessions.forEach(s => {
-        const tId = s.topicId?._id || s.topicId;
-        const tTitle = s.topicId?.title || 'Unknown Topic';
-        
-        if (!topicStats[tId]) {
-          topicStats[tId] = { totalScore: 0, count: 0, title: tTitle };
-        }
-        topicStats[tId].totalScore += (s.score / s.totalQuestions) * 100;
-        topicStats[tId].count += 1;
-      });
-
-      return Object.entries(topicStats)
-        .map(([id, stats]) => ({
-          id,
-          title: stats.title,
-          avgScore: stats.totalScore / stats.count,
-          count: stats.count
-        }))
-        .filter(t => t.avgScore < 70 && t.count >= 1)
-        .sort((a, b) => a.avgScore - b.avgScore)
-        .slice(0, 3);
-    };
-
-    setStats({
-      streak: calculateStreak(sessions),
-      weakTopics: calculateWeakTopics(sessions),
-      totalSessions: sessions.length
-    });
-  }, [sessions]);
-
-  return { ...stats, loading, refresh: fetchSessions };
+  return { ...stats, loading, error, refresh: fetchAnalytics };
 };

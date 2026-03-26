@@ -47,7 +47,7 @@ export function buildSummaryPrompt(notes, imageCount = 0) {
   if (notes?.trim()) sources.push("the provided text notes");
   if (imageCount > 0) sources.push(`${imageCount} uploaded image(s)`);
 
-  return `You are an expert tutor. Summarize the following study materials in a clear, structured format with key concepts highlighted.
+  return `You are an expert tutor. Summarize the following study materials in a clear, structured format with key concepts highlighted.Also you ruse examples where needed to explain the concepts better.
   
 ${notes?.trim() ? `Text notes:\n${notes}` : "No text notes provided."}
 ${imageCount > 0 ? `\nAlso analyze the ${imageCount} attached image(s) for additional context and incorporate their key visual concepts.` : ""}

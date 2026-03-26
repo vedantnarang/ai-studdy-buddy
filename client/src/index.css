@@ -22,7 +22,7 @@
   --color-primary-dim: #0048c1;
   --color-on-tertiary: #fcf7ff;
   --color-on-primary-container: #0048bf;
-  --color-surface-container: #e8eff3;
+  --color-surface-container: var(--surface-container);
   --color-on-tertiary-fixed: #3e3a54;
   --color-error-container: #fe8983;
   --color-tertiary-dim: #54506b;
@@ -31,20 +31,20 @@
   --color-secondary-fixed: #d3e4fe;
   --color-on-background: var(--text);
   --color-secondary-fixed-dim: #c5d6f0;
-  --color-surface-container-low: #f0f4f7;
+  --color-surface-container-low: var(--surface-container-low);
   --color-surface-tint: #0053db;
   --color-surface: var(--bg);
   --color-primary-fixed-dim: #c7d3ff;
   --color-tertiary-fixed: #e3dbfd;
   --color-error: #9f403d;
-  --color-surface-container-high: #e1e9ee;
-  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-lowest: var(--surface-container-lowest);
   --color-tertiary-container: #e3dbfd;
   --color-on-secondary: #f7f9ff;
   --color-primary: #0053db;
   --color-on-error-container: #752121;
   --color-primary-container: #dbe1ff;
-  --color-surface-container-highest: #d9e4ea;
+  --color-surface-container-highest: var(--surface-container-highest);
   --color-inverse-primary: #618bff;
   --color-secondary-dim: #44546a;
   --color-error-dim: #4e0309;
@@ -90,6 +90,12 @@
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f0f4f7;
+  --surface-container: #e8eff3;
+  --surface-container-high: #e1e9ee;
+  --surface-container-highest: #d9e4ea;
+
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
   color-scheme: light dark;
@@ -119,6 +125,12 @@
   --social-bg: rgba(47, 48, 58, 0.5);
   --shadow:
     rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+
+  --surface-container-lowest: #14161b;
+  --surface-container-low: #1b1e24;
+  --surface-container: #22252c;
+  --surface-container-high: #2a2e36;
+  --surface-container-highest: #333842;
 }
 
 .dark #social .button-icon {

@@ -1,5 +1,6 @@
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
+import jwt from "jsonwebtoken";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
 
 export async function POST(request) {
@@ -24,8 +25,20 @@ export async function POST(request) {
       email,
       password,
     });
+    const secret = process.env.JWT_SECRET_KEY;
+    if (!secret) {
+      throw new Error("JWT_SECRET_KEY is missing from environment variables.");
+    }
+
+    const token = jwt.sign(
+      { userId: newUser._id, email: newUser.email },
+      secret,
+      { expiresIn: "7d" }
+    );
+
     return successResponse({ 
       message: "User registered successfully!", 
+      token,
       user: {
         id: newUser._id,
         name: newUser.name,

@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/db";
 import Session from "@/models/Session";
 import Topic from "@/models/Topic";
+import Subject from "@/models/Subject";
 import { getAuthUser } from "@/lib/authHelper";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
 
@@ -13,10 +14,23 @@ export async function GET(request) {
     }
 
     await connectDB();
+    
+    // First fetch subjects to know what's active
+    const subjects = await Subject.find({ userId: userPayload.userId }).select('_id').lean();
+    const validSubjectIds = new Set(subjects.map(s => s._id.toString()));
+
+    // Fetch sessions and populate topic
     const sessions = await Session.find({ userId: userPayload.userId })
-      .populate('topicId', 'title')
-      .sort({ createdAt: -1 });
-    return successResponse(sessions, 200);
+      .populate('topicId', 'title subjectId')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Filter to only include sessions for topics that belong to active subjects
+    const filteredSessions = sessions.filter(s => {
+      return s.topicId && validSubjectIds.has(s.topicId.subjectId?.toString());
+    });
+
+    return successResponse(filteredSessions, 200);
 
   } catch (error) {
     console.error("Fetch sessions error:", error);

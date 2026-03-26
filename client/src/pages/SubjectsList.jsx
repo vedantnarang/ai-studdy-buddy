@@ -5,16 +5,43 @@ import { useAnalytics } from "../hooks/useAnalytics";
 import { useAuth } from "../context/AuthContext";
 import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
 
+// Helper components for metrics
+const EmptyMetricState = ({ icon, title, message }) => (
+  <div className="flex flex-col items-center justify-center py-8 text-center animate-in fade-in zoom-in-95 duration-500">
+    <div className="w-16 h-16 bg-primary-container/30 rounded-full flex items-center justify-center mb-4">
+      <span className="material-symbols-outlined text-primary text-3xl">
+        {icon}
+      </span>
+    </div>
+    <p className="text-base font-bold text-on-surface">
+      {title}
+    </p>
+    <p className="text-sm text-on-surface-variant mt-1 max-w-sm">
+      {message}
+    </p>
+  </div>
+);
+
 const SubjectsList = () => {
   const { user } = useAuth();
-  const { subjects, loading, error, createSubject, deleteSubject } =
-    useSubjects();
-  const { weakTopics, loading: analyticsLoading } = useAnalytics();
+  const { subjects, loading, error, createSubject, deleteSubject } = useSubjects();
+  
+  // Metrics & Analytics
+  const [activeMetricTab, setActiveMetricTab] = useState("weakness");
+  const { 
+    weakTopics, 
+    forgottenTopics, 
+    materialGaps, 
+    subjectReadiness,
+    loading: analyticsLoading,
+    error: analyticsError,
+    refresh: refreshAnalytics
+  } = useAnalytics();
 
   const [isCreating, setIsCreating] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
-  const [newColor, setNewColor] = useState("#0053db"); // Default primary blue
+  const [newColor, setNewColor] = useState("#0053db"); 
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState("");
 
@@ -34,6 +61,7 @@ const SubjectsList = () => {
       setIsCreating(false);
       setNewTitle("");
       setNewDescription("");
+      refreshAnalytics(); 
     } else {
       setCreateError(result.error);
     }
@@ -50,7 +78,10 @@ const SubjectsList = () => {
   const confirmDelete = async () => {
     if (!subjectToDelete) return;
     setIsDeleting(true);
-    await deleteSubject(subjectToDelete);
+    const result = await deleteSubject(subjectToDelete);
+    if (result.success) {
+      refreshAnalytics();
+    }
     setIsDeleting(false);
     setDeleteModalOpen(false);
     setSubjectToDelete(null);
@@ -69,7 +100,6 @@ const SubjectsList = () => {
     );
   }
 
-  // Helper to adjust color opacity easily for tailwind styles
   const getTint = (hex, opacity) => `${hex}${opacity}`;
 
   return (
@@ -77,7 +107,10 @@ const SubjectsList = () => {
       {/* Welcome Header */}
       <header className="mb-12">
         <h2 className="text-3xl md:text-4xl font-extrabold font-headline tracking-tight text-on-surface mb-2">
-          Welcome back, {user?.name?.split(" ")[0] || "Scholar"}
+          Welcome back, {
+            (user?.name?.split(" ")[0] || "Scholar").charAt(0).toUpperCase() + 
+            (user?.name?.split(" ")[0] || "Scholar").slice(1)
+          }
         </h2>
         <p className="text-tertiary font-medium">
           Ready for your deep study session today?
@@ -131,16 +164,57 @@ const SubjectsList = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-on-surface-variant mb-2">
+                  <label className="block text-sm font-semibold text-on-surface-variant mb-3">
                     Theme Color
                   </label>
-                  <div className="relative">
-                    <input
-                      type="color"
-                      value={newColor}
-                      onChange={(e) => setNewColor(e.target.value)}
-                      className="w-full h-12 p-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-surface-container-lowest cursor-pointer"
-                    />
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-wrap gap-2.5">
+                      {[
+                        "#0053db", "#7c3aed", "#db2777", "#ea580c", "#16a34a", "#0891b2", "#4b5563",
+                      ].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setNewColor(preset)}
+                          className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 active:scale-95 ${
+                            newColor === preset ? "border-on-surface scale-110 shadow-md" : "border-transparent"
+                          }`}
+                          style={{ backgroundColor: preset }}
+                          title={preset}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="relative group cursor-pointer">
+                        <div 
+                          className="w-12 h-12 rounded-full border-2 border-white dark:border-gray-700 shadow-sm transition-transform group-hover:scale-105"
+                          style={{ backgroundColor: newColor }}
+                          onClick={() => document.getElementById('custom-color-picker').click()}
+                        />
+                        <input
+                          id="custom-color-picker"
+                          type="color"
+                          value={newColor}
+                          onChange={(e) => setNewColor(e.target.value)}
+                          className="absolute inset-0 opacity-0 w-full h-full cursor-grab"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-mono text-sm">#</span>
+                          <input
+                            type="text"
+                            value={newColor.replace('#', '')}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/[^0-9A-Fa-f]/g, '').slice(0, 6);
+                              setNewColor(`#${val}`);
+                            }}
+                            placeholder="FFFFFF"
+                            className="w-full pl-7 pr-4 py-2 bg-surface-container-low border-none rounded-xl text-on-surface font-mono text-sm focus:ring-2 focus:ring-primary/40 outline-none transition-all uppercase"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -178,20 +252,25 @@ const SubjectsList = () => {
           </div>
         )}
 
-        {/* Bento Grid */}
         {subjects.length === 0 && !isCreating ? (
-          <div className="text-center py-20 bg-surface-container-low rounded-3xl border border-gray-200 dark:border-gray-800 border-dashed">
-            <h3 className="text-xl font-bold text-on-surface">
-              Your library is empty
+          <div className="flex flex-col items-center justify-center py-24 px-6 bg-surface-container-lowest dark:bg-gray-800/40 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-700/50 animate-in zoom-in-95 duration-500">
+            <div className="w-20 h-20 bg-primary/10 dark:bg-primary/20 rounded-full flex items-center justify-center mb-6">
+              <span className="material-symbols-outlined text-4xl text-primary">
+                library_books
+              </span>
+            </div>
+            <h3 className="text-2xl font-bold text-on-surface mb-3">
+              Your Knowledge Hub is Ready
             </h3>
-            <p className="mt-2 text-on-surface-variant mb-8 max-w-sm mx-auto">
-              Create a subject to start analyzing your notes, generating
-              flashcards, and taking quizzes.
+            <p className="text-on-surface-variant mb-10 max-w-sm mx-auto text-center leading-relaxed font-medium p-2">
+              Start by creating your first subject. We'll help you organize notes, 
+              generate AI flashcards, and master your topics.
             </p>
             <button
               onClick={() => setIsCreating(true)}
-              className="px-6 py-3 bg-primary text-on-primary font-bold rounded-xl hover:bg-primary-dim transition-colors shadow-md"
+              className="group flex items-center border-3 border-blue-100 gap-2 px-8 py-3.5 bg-primary text-on-primary font-bold rounded-2xl hover:bg-primary-dim transition-all hover:shadow-lg hover:shadow-blue-200/50 active:scale-95 gradient-text"
             >
+              <span className="material-symbols-outlined text-[20px] ">add</span>
               Start Your First Subject
             </button>
           </div>
@@ -199,42 +278,33 @@ const SubjectsList = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
             {subjects.map((subject) => {
               const accentColor = subject.color || "#0053db";
-
               return (
                 <Link
                   to={`/subject/${subject._id}`}
                   key={subject._id}
                   className="bg-surface-container-lowest p-6 lg:p-8 rounded-2xl flex flex-col relative overflow-hidden group hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-gray-100 dark:border-gray-800"
                 >
-                  {/* Glowing side accent */}
                   <div
                     className="absolute left-0 top-0 bottom-0 w-1.5"
                     style={{ backgroundColor: accentColor }}
                   ></div>
 
                   <div className="flex justify-between items-start mb-6 w-full">
-                    {/* Icon Container */}
                     <div
                       className="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl"
                       style={{
-                        backgroundColor: getTint(accentColor, "20"), // 20% opacity
+                        backgroundColor: getTint(accentColor, "20"),
                         color: accentColor,
                       }}
                     >
-                      {subject.title
-                        ? subject.title.charAt(0).toUpperCase()
-                        : "S"}
+                      {subject.title ? subject.title.charAt(0).toUpperCase() : "S"}
                     </div>
-
-                    {/* Delete Action button (appears on hover) */}
                     <button
                       onClick={(e) => handleDeleteClick(e, subject._id)}
                       className="text-gray-400 hover:text-error opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-full hover:bg-error-container"
                       title="Delete Subject"
                     >
-                      <span className="material-symbols-outlined text-xl">
-                        delete
-                      </span>
+                      <span className="material-symbols-outlined text-xl">delete</span>
                     </button>
                   </div>
 
@@ -243,8 +313,7 @@ const SubjectsList = () => {
                   </h4>
 
                   <p className="text-sm text-on-surface-variant mb-8 line-clamp-2">
-                    {subject.description ||
-                      "No description provided. Click to add topics and notes."}
+                    {subject.description || "No description provided."}
                   </p>
 
                   <div className="mt-auto pt-4 border-t border-gray-50 dark:border-gray-800/50 flex flex-col gap-2">
@@ -254,29 +323,9 @@ const SubjectsList = () => {
                         color: accentColor,
                         borderColor: getTint(accentColor, "20"),
                       }}
-                      onMouseEnter={(e) => {
-                        e.target.style.backgroundColor = accentColor;
-                        e.target.style.color = "#fff";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.backgroundColor = "transparent";
-                        e.target.style.color = accentColor;
-                      }}
                     >
                       View Subject
                     </button>
-                    {subject.hasFlashcards && (
-                      <Link
-                        to={`/subject/${subject._id}/flashcards`}
-                        onClick={(e) => e.stopPropagation()} // Prevent double nav since parent is a Link
-                        className="w-full py-2.5 bg-surface-container-high hover:bg-surface-container-highest dark:bg-gray-700 dark:hover:bg-gray-600 text-on-surface dark:text-gray-100 text-xs font-bold uppercase tracking-widest rounded-xl transition-colors text-center shadow-sm flex items-center justify-center gap-2"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">
-                          style
-                        </span>
-                        Flashcards
-                      </Link>
-                    )}
                   </div>
                 </Link>
               );
@@ -285,76 +334,156 @@ const SubjectsList = () => {
         )}
       </section>
 
-      {/* Focus Areas (Weak Topics Widget replacing the Focus Hours UI) */}
-      <section className="mt-12">
-        <div className="bg-surface-container-low rounded-3xl p-8 border border-white dark:border-gray-800 shadow-xs">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h3 className="text-xl font-bold font-headline text-on-surface flex items-center gap-2">
-                <span className="material-symbols-outlined text-error">
-                  flag
-                </span>
-                Focus Areas
-              </h3>
-              <p className="text-sm text-on-surface-variant mt-1">
-                AI-detected weak points based on recent quizzes
-              </p>
-            </div>
-            {/* Design flair: minimal action pill */}
-            <div className="hidden sm:flex gap-2">
-              <span className="px-4 py-1.5 text-xs font-bold rounded-full bg-surface-container-highest text-on-surface">
-                Auto-updated
-              </span>
-            </div>
-          </div>
-
-          <div className="bg-surface-container-lowest rounded-2xl p-6 border border-gray-100 dark:border-gray-800">
-            {weakTopics.length > 0 ? (
-              <ul className="space-y-6">
-                {weakTopics.map((topic) => (
-                  <li
-                    key={topic.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
-                  >
-                    <span className="text-sm font-bold text-on-surface truncate flex-1">
-                      {topic.title}
-                    </span>
-                    <div className="flex items-center gap-4 w-full sm:w-1/2 justify-end">
-                      <div className="w-full max-w-[200px] h-2 bg-surface-container-high rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-error transition-all duration-1000 ease-out relative"
-                          style={{ width: `${Math.max(10, topic.avgScore)}%` }} // Ensure bar has some minimum vis
-                        >
-                          <div className="absolute inset-0 bg-white/20"></div>
-                        </div>
-                      </div>
-                      <span className="text-xs font-black text-error w-10 text-right">
-                        {Math.round(topic.avgScore)}%
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <div className="w-16 h-16 bg-primary-container rounded-full flex items-center justify-center mb-4">
-                  <span className="material-symbols-outlined text-primary text-3xl">
-                    done_all
-                  </span>
-                </div>
-                <p className="text-base font-bold text-on-surface">
-                  You're doing great!
-                </p>
-                <p className="text-sm text-on-surface-variant mt-1 max-w-sm">
-                  {analyticsLoading
-                    ? "Crunching the numbers..."
-                    : "No weak spots detected yet. Keep taking quizzes to give the AI more data."}
+      {/* Focus Areas Section */}
+      {subjects.length > 0 && (
+        <section className="mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="bg-surface-container-low rounded-3xl p-8 border border-white dark:border-gray-800 shadow-xs">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+              <div>
+                <h3 className="text-xl font-bold font-headline text-on-surface flex items-center gap-2">
+                  <span className="material-symbols-outlined text-amber-500">insights</span>
+                  Focus & Insights
+                </h3>
+                <p className="text-sm text-on-surface-variant mt-1">
+                  AI-powered analysis of your study progress
                 </p>
               </div>
-            )}
+
+              <div className="flex flex-wrap gap-2 bg-surface-container-highest p-1.5 rounded-2xl">
+                {[
+                  { id: "weakness", label: "Weak Points", icon: "flag" },
+                  { id: "retention", label: "Retention", icon: "history" },
+                  { id: "gaps", label: "Gaps", icon: "format_list_bulleted" },
+                  { id: "readiness", label: "Readiness", icon: "verified" },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveMetricTab(tab.id)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                      activeMetricTab === tab.id
+                        ? "bg-primary text-on-primary shadow-sm"
+                        : "text-on-surface-variant hover:bg-surface-container-low"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-surface-container-lowest rounded-2xl p-6 border border-gray-100 dark:border-gray-800 min-h-[220px] flex flex-col justify-center">
+              {analyticsLoading ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mb-4"></div>
+                  <p className="text-sm font-medium text-on-surface-variant">Analyzing your progress...</p>
+                </div>
+              ) : (
+                <>
+                  {activeMetricTab === "weakness" && (
+                    <div className="animate-in fade-in duration-500">
+                      {weakTopics.length > 0 ? (
+                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {weakTopics.map((topic) => (
+                            <li key={topic.id} className="flex flex-col gap-2 p-4 rounded-xl bg-surface-container-low border border-gray-50 dark:border-gray-700">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-sm font-bold text-on-surface truncate pr-4">{topic.title}</span>
+                                <span className="text-xs font-black text-error">{Math.round(topic.avgScore)}%</span>
+                              </div>
+                              <div className="w-full h-2.5 bg-surface-container-high rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-error transition-all duration-1000 ease-out"
+                                  style={{ width: `${Math.max(10, topic.avgScore)}%` }}
+                                ></div>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <EmptyMetricState icon="done_all" title="Master of all!" message="No weak spots detected. Your recent quiz scores are consistently above 70%." />
+                      )}
+                    </div>
+                  )}
+
+                  {activeMetricTab === "retention" && (
+                    <div className="animate-in fade-in duration-500">
+                      {forgottenTopics.length > 0 ? (
+                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {forgottenTopics.map((topic) => (
+                            <li key={topic.id} className="flex items-center justify-between p-4 rounded-xl bg-surface-container-low border border-amber-100 dark:border-amber-900/30">
+                              <div className="flex items-center gap-4">
+                                <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                                  <span className="material-symbols-outlined text-amber-600 dark:text-amber-400">timer</span>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-bold text-on-surface">{topic.title}</p>
+                                  <p className="text-[10px] text-tertiary mt-0.5">Last review: {new Date(topic.lastReviewed).toLocaleDateString()}</p>
+                                </div>
+                              </div>
+                              <Link to={`/topic/${topic.id}`} className="px-3 py-1.5 bg-amber-500 text-white text-[10px] font-black uppercase rounded-lg hover:bg-amber-600 transition-colors">Review</Link>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <EmptyMetricState icon="auto_awesome" title="Memory is Fresh" message="No topics found that haven't been reviewed in 4+ days. Great consistency!" />
+                      )}
+                    </div>
+                  )}
+
+                  {activeMetricTab === "gaps" && (
+                    <div className="animate-in fade-in duration-500">
+                      {materialGaps.length > 0 ? (
+                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {materialGaps.map((topic) => (
+                            <li key={topic.id} className="p-4 rounded-xl bg-surface-container-low border border-blue-50 dark:border-blue-900/10">
+                              <p className="text-sm font-bold text-on-surface mb-3">{topic.title}</p>
+                              <div className="flex gap-2">
+                                {topic.missing.flashcards && <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-bold rounded-md">No Flashcards</span>}
+                                {topic.missing.quiz && <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-[10px] font-bold rounded-md">No Quiz</span>}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <EmptyMetricState icon="library_add_check" title="Fully Equipped" message="All your topics with notes have generated study materials. You're ready to go!" />
+                      )}
+                    </div>
+                  )}
+
+                  {activeMetricTab === "readiness" && (
+                    <div className="animate-in fade-in duration-500">
+                      {subjectReadiness.some(s => s.sessionCount > 0) ? (
+                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {subjectReadiness.filter(s => s.sessionCount > 0).map((sub) => (
+                            <li key={sub.title} className="p-4 rounded-xl bg-surface-container-low border border-gray-100 dark:border-gray-800">
+                              <div className="flex justify-between items-center mb-3">
+                                <span className="text-sm font-bold text-on-surface">{sub.title}</span>
+                                <span className="text-xs font-black" style={{ color: sub.color }}>{sub.readiness}% Readiness</span>
+                              </div>
+                              <div className="w-full h-3 bg-surface-container-high rounded-full overflow-hidden p-0.5">
+                                <div
+                                  className="h-full rounded-full transition-all duration-1000 ease-out"
+                                  style={{ 
+                                    width: `${Math.max(5, sub.readiness)}%`,
+                                    backgroundColor: sub.color
+                                  }}
+                                ></div>
+                              </div>
+                              <p className="text-[10px] text-on-surface-variant mt-2">Based on {sub.sessionCount} sessions</p>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <EmptyMetricState icon="analytics" title="Need Data" message="Take more quizzes to see your overall subject readiness scores!" />
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <DeleteConfirmationModal
         isOpen={deleteModalOpen}
@@ -362,7 +491,7 @@ const SubjectsList = () => {
         onConfirm={confirmDelete}
         isDeleting={isDeleting}
         title="Delete Subject?"
-        message="Are you completely sure you want to delete this subject? All associated topics, notes, AI generations, and flashcards will be permanently erased. This cannot be undone."
+        message="Are you sure you want to delete this subject? This cannot be undone."
       />
     </div>
   );

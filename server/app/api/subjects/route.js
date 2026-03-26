@@ -20,8 +20,8 @@ export async function GET(request) {
 
     const subjects = await Subject.find({ userId: userPayload.userId }).lean();
 
-    if(subjects.length === 0){
-        return errorResponse("No subjects found", "NOT_FOUND", 404);
+    if (subjects.length === 0) {
+      return successResponse([], 200);
     }
 
     // High performance check: Find all topics that contain at least one flashcard
