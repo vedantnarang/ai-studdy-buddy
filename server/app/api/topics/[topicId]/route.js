@@ -2,6 +2,8 @@ import { connectDB } from "@/lib/db";
 import Topic from "@/models/Topic";
 import Flashcard from "@/models/Flashcard";
 import Quiz from "@/models/Quiz";
+import QuizAttempt from "@/models/QuizAttempt";
+import Session from "@/models/Session";
 import Subject from "@/models/Subject";
 import { getAuthUser } from "@/lib/authHelper";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
@@ -141,8 +143,12 @@ export async function DELETE(request, context) {
       return errorResponse("Topic not found or unauthorized to delete", "NOT_FOUND", 404);
     }
 
-    await Flashcard.deleteMany({ topicId, userId: userPayload.userId });
-    await Quiz.deleteMany({ topicId, userId: userPayload.userId });
+    await Promise.all([
+      Flashcard.deleteMany({ topicId, userId: userPayload.userId }),
+      Quiz.deleteMany({ topicId, userId: userPayload.userId }),
+      QuizAttempt.deleteMany({ topicId, userId: userPayload.userId }),
+      Session.deleteMany({ topicId, userId: userPayload.userId }),
+    ]);
 
     return successResponse({ message: "Topic and associated data securely deleted.", topicId }, 200);
 

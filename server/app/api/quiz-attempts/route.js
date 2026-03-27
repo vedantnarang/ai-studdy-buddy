@@ -2,8 +2,10 @@ import { connectDB } from "@/lib/db";
 import { getAuthUser } from "@/lib/authHelper";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
 import QuizAttempt from "@/models/QuizAttempt";
+import Topic from "@/models/Topic";
+import Subject from "@/models/Subject";
 
-// GET /api/quiz-attempts?quizId=...&status=in_progress
+
 export async function GET(request) {
   try {
     const userPayload = await getAuthUser(request);
@@ -47,10 +49,29 @@ export async function POST(request) {
 
     await connectDB();
 
+    // Look up subject info from the topic for denormalization
+    let subjectId, subjectTitle, subjectColor;
+    try {
+      const topic = await Topic.findById(topicId).select('subjectId').lean();
+      if (topic?.subjectId) {
+        const subject = await Subject.findById(topic.subjectId).select('title color').lean();
+        if (subject) {
+          subjectId = subject._id;
+          subjectTitle = subject.title;
+          subjectColor = subject.color;
+        }
+      }
+    } catch (lookupErr) {
+      console.warn("Could not resolve subject for QuizAttempt denormalization:", lookupErr.message);
+    }
+
     const newAttempt = await QuizAttempt.create({
       userId: userPayload.userId,
       quizId,
       topicId,
+      subjectId,
+      subjectTitle,
+      subjectColor,
       answers: [],
       score: 0,
       status: 'in_progress',
@@ -62,3 +83,4 @@ export async function POST(request) {
     return errorResponse("Failed to create quiz attempt", "CREATE_FAILED", 500);
   }
 }
+

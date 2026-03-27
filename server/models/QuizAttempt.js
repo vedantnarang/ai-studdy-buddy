@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const answerSchema = new mongoose.Schema({
   questionId: {
-    type: mongoose.Schema.Types.ObjectId, // Connects to the specific question inside the Quiz document
+    type: mongoose.Schema.Types.ObjectId,
     required: true,
   },
   selectedOptionIndex: {
@@ -31,6 +31,16 @@ const quizAttemptSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Topic',
       required: true,
+    },
+    subjectId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Subject',
+    },
+    subjectTitle: {
+      type: String,
+    },
+    subjectColor: {
+      type: String,
     },
     answers: {
       type: [answerSchema],
