@@ -4,6 +4,7 @@ import { useTopic } from '../hooks/useTopic';
 import { useDebounce } from '../hooks/useDebounce';
 import DocumentUpload from '../components/DocumentUpload';
 import DocumentModal from '../components/DocumentModal';
+import ExtractionFailureModal from '../components/ExtractionFailureModal';
 import AIPanel from '../components/AIPanel';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -15,7 +16,8 @@ const TopicDetail = () => {
   const navigate = useNavigate();
   const { 
     topic, setTopic, loading, error, 
-    updateNotes, uploadDocuments, updateDocumentText, deleteDocument, deleteImage
+    updateNotes, uploadDocuments, updateDocumentText, deleteDocument, deleteImage,
+    retryImageExtraction
   } = useTopic(id);
   
   const [notes, setNotes] = useState('');
@@ -23,6 +25,7 @@ const TopicDetail = () => {
   const [uploading, setUploading] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [savingDoc, setSavingDoc] = useState(false);
+  const [failedExtractions, setFailedExtractions] = useState([]);
 
   // Initialize local notes state
   useEffect(() => {
@@ -58,7 +61,37 @@ const TopicDetail = () => {
     setUploading(true);
     const result = await uploadDocuments(files);
     setUploading(false);
+    
+    // Check for images with failed extraction
+    if (result.success && result.data?.results) {
+      const failed = result.data.results
+        .filter(r => r.success && r.extractionMethod === 'none')
+        .map(r => {
+          // Find the actual image object in the updated topic
+          const updatedTopic = result.data.topic;
+          return updatedTopic.sourceImages.find(img => img.url === r.imageUrl);
+        })
+        .filter(Boolean);
+        
+      if (failed.length > 0) {
+        setFailedExtractions(failed);
+      }
+    }
+    
     return result;
+  };
+
+  const handleRetryExtraction = async (imageId) => {
+    const result = await retryImageExtraction(imageId);
+    if (result.success) {
+      // Remove from failed list
+      setFailedExtractions(prev => prev.filter(img => img._id !== imageId));
+      
+      // If no more failed images, close modal
+      if (failedExtractions.length <= 1) {
+        setFailedExtractions([]);
+      }
+    }
   };
 
   const handleDocumentSave = async (documentId, extractedText) => {
@@ -257,10 +290,10 @@ const TopicDetail = () => {
           {!hasFlashcards ? (
             <div 
               onClick={() => document.querySelector('button[title="Flashcards"]')?.parentElement?.click()}
-              className="bg-[#f0f4f7]/50 dark:bg-gray-800/50 rounded-3xl p-8 text-center border-2 border-dashed border-[#a9b4b9]/30 dark:border-gray-700 cursor-pointer hover:border-primary/50 transition-colors group"
+              className="bg-[#f0f4f7]/50 dark:bg-gray-800/50 rounded-3xl p-8 text-center border-2 border-dashed border-outline-variant/30 dark:border-gray-700 cursor-pointer hover:border-primary/50 transition-colors group"
             >
               <div className="w-16 h-16 rounded-full bg-[#e1e9ee] dark:bg-gray-700 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-[#717c82] dark:text-gray-400 text-3xl group-hover:text-primary">style</span>
+                <span className="material-symbols-outlined text-outline dark:text-gray-400 text-3xl group-hover:text-primary">style</span>
               </div>
               <h4 className="font-headline font-bold text-on-surface dark:text-gray-200 mb-2 text-lg">No flashcards yet</h4>
               <p className="text-sm text-on-surface-variant dark:text-gray-400 mb-6 leading-relaxed">Let the AI analyze your summary and create active recall cards for you.</p>
@@ -290,10 +323,10 @@ const TopicDetail = () => {
           {!hasQuiz ? (
             <div 
               onClick={() => document.querySelector('button[title="Quiz"]')?.parentElement?.click()}
-              className="bg-[#f0f4f7]/50 dark:bg-gray-800/50 rounded-3xl p-8 text-center border-2 border-dashed border-[#a9b4b9]/30 dark:border-gray-700 cursor-pointer hover:border-[#22C55E]/50 transition-colors group"
+              className="bg-[#f0f4f7]/50 dark:bg-gray-800/50 rounded-3xl p-8 text-center border-2 border-dashed border-outline-variant/30 dark:border-gray-700 cursor-pointer hover:border-[#22C55E]/50 transition-colors group"
             >
                <div className="w-16 h-16 rounded-full bg-[#e1e9ee] dark:bg-gray-700 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                 <span className="material-symbols-outlined text-[#717c82] dark:text-gray-400 text-3xl group-hover:text-[#22C55E]">quiz</span>
+                 <span className="material-symbols-outlined text-outline dark:text-gray-400 text-3xl group-hover:text-[#22C55E]">quiz</span>
                </div>
                <h4 className="font-headline font-bold text-on-surface dark:text-gray-200 mb-2 text-lg">No Practice Quiz</h4>
                <p className="text-sm text-on-surface-variant dark:text-gray-400 mb-6 leading-relaxed">Evaluate your understanding by generating an interactive AI quiz.</p>
@@ -340,6 +373,27 @@ const TopicDetail = () => {
           onSave={handleDocumentSave}
           onAppendToNotes={handleAppendToNotes}
           saving={savingDoc} 
+        />
+      )}
+
+      {/* Extraction Failure Modal */}
+      {failedExtractions.length > 0 && (
+        <ExtractionFailureModal 
+          failedImages={failedExtractions}
+          onClose={() => setFailedExtractions([])}
+          onRetry={handleRetryExtraction}
+          onManualEntry={(img) => {
+            setSelectedDoc({ 
+              _id: img._id, 
+              fileName: img.fileName || 'Image', 
+              fileType: 'image', 
+              extractedText: img.extractedText, 
+              imageUrl: img.url 
+            });
+            // Keep the failure modal open or close it? 
+            // Better to close it so user can focus on manual entry
+            setFailedExtractions(prev => prev.filter(f => f._id !== img._id));
+          }}
         />
       )}
     </div>

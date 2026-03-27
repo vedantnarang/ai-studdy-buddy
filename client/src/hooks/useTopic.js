@@ -154,6 +154,24 @@ export const useTopic = (topicId) => {
     }
   };
 
+  const retryImageExtraction = async (imageId) => {
+    if (!topicId || !imageId) return { success: false, error: "Missing topicId or imageId" };
+
+    try {
+      const res = await api.post(`/topics/${topicId}/images`, { imageId });
+      const updatedTopic = res.data.data?.topic || res.data.topic || res.data.data;
+      if (updatedTopic) {
+        setTopic(updatedTopic);
+      }
+      toast.success('Text extracted successfully!');
+      return { success: true, data: res.data.data };
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || err.message || 'Extraction failed. Model might still be busy.';
+      toast.error(errorMsg);
+      return { success: false, error: errorMsg };
+    }
+  };
+
   return { 
     topic, 
     setTopic,
@@ -168,5 +186,6 @@ export const useTopic = (topicId) => {
     updateDocumentText,
     deleteDocument,
     deleteImage,
+    retryImageExtraction,
   };
 };

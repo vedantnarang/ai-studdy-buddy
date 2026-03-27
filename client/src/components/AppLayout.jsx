@@ -94,9 +94,13 @@ const AppLayout = () => {
           <DarkModeToggle />
 
           {/* Profile Circle */}
-          <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shadow-sm shadow-blue-500/20">
+          <Link 
+            to="/profile" 
+            className={`w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold font-headline shadow-sm shadow-blue-500/20 hover:scale-110 hover:bg-blue-700 transition-all cursor-pointer ${location.pathname === '/profile' ? 'ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-900' : ''}`}
+            title="View Profile"
+          >
             {user?.name ? user.name.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'S')}
-          </div>
+          </Link>
         </div>
       </header>
 

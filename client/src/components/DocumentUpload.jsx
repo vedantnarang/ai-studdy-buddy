@@ -104,7 +104,7 @@ const DocumentUpload = ({ onUpload, uploading: externalUploading }) => {
       
       {/* Drop Zone */}
       <div 
-        className={`relative flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-xl transition-colors cursor-pointer ${
+        className={`relative flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-xl transition-colors cursor-pointer hover:shadow-lg hover:border-blue-400 hover:border-2  hover:border-solid transition-all duration-500 ${
           dragActive 
             ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
             : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/30 hover:bg-gray-100 dark:hover:bg-gray-700/50'

@@ -95,8 +95,19 @@ export const AuthProvider = ({ children }) => {
     navigate('/login');
   };
 
+  const updateProfile = async (name, email) => {
+    try {
+      const response = await api.put('/auth/me', { name, email });
+      const userData = response.data.user || response.data.data?.user || response.data;
+      dispatch({ type: 'SET_USER', payload: userData });
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.error?.message || 'Update failed' };
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ ...state, login, register, logout, dispatch }}>
+    <AuthContext.Provider value={{ ...state, login, register, logout, updateProfile, dispatch }}>
       {children}
     </AuthContext.Provider>
   );

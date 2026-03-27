@@ -87,7 +87,7 @@ const TopicSummary = () => {
   };
 
   const handleRegenerate = async () => {
-    if (!window.confirm('Are you sure you want to regenerate the summary? This will completely overwrite the existing deep dive with a new AI generation based on your current notes and documents.')) return;
+    if (!window.confirm('Are you sure you want to regenerate the summary? This will completely overwrite the existing AI summary.')) return;
     
     setIsRegenerating(true);
     try {

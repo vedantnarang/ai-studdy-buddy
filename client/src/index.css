@@ -180,3 +180,20 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .glass-card {
+    background: rgba(22, 23, 29, 0.7);
+}
+
+.gradient-mesh {
+    background-color: var(--bg);
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 83, 219, 0.1) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(0, 242, 254, 0.08) 0px, transparent 50%);
+}
