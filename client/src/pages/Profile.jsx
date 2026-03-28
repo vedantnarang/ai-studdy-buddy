@@ -133,7 +133,7 @@ const Profile = () => {
             <h3 className="text-3xl font-extrabold text-on-surface dark:text-white">{subjects.length}</h3>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl flex items-center gap-6 shadow-sm border border-gray-100 dark:border-slate-700">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl flex items-center gap-6 shadow-sm border border-gray-100 dark:border-slate-700 relative group/streak cursor-default">
           <div className="w-14 h-14 rounded-2xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400">
             <span className="material-symbols-outlined text-3xl filled-icon">local_fire_department</span>
           </div>
@@ -142,6 +142,10 @@ const Profile = () => {
             <h3 className="text-3xl font-extrabold text-on-surface dark:text-white">
               {loadingAnalytics ? '...' : `${streak}-day`}
             </h3>
+          </div>
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-xl shadow-xl opacity-0 invisible group-hover/streak:opacity-100 group-hover/streak:visible transition-all duration-200 z-50 pointer-events-none">
+            <p className="font-semibold mb-1">🔥 How streaks work</p>
+            <p className="text-gray-300 leading-relaxed">Complete quizzes or review flashcards daily to keep your streak alive. Miss a day and it resets!</p>
           </div>
         </div>
       </section>

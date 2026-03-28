@@ -375,7 +375,7 @@ const SubjectsList = () => {
 
               <div className="flex flex-wrap gap-2 bg-surface-container-highest p-1.5 rounded-2xl">
                 {[
-                  { id: "weakness", label: "Weak Points", icon: "flag" },
+                  { id: "weakness", label: "Weak Topics", icon: "flag" },
                   { id: "retention", label: "Retention", icon: "history" },
                   { id: "gaps", label: "Gaps", icon: "format_list_bulleted" },
                   { id: "readiness", label: "Readiness", icon: "verified" },
@@ -429,7 +429,7 @@ const SubjectsList = () => {
                                 <div
                                   className="h-full bg-error transition-all duration-1000 ease-out"
                                   style={{
-                                    width: `${Math.max(10, topic.avgScore)}%`,
+                                    width: `${topic.avgScore}%`,
                                   }}
                                 ></div>
                               </div>
@@ -555,7 +555,7 @@ const SubjectsList = () => {
                                   <div
                                     className="h-full rounded-full transition-all duration-1000 ease-out"
                                     style={{
-                                      width: `${Math.max(5, sub.readiness)}%`,
+                                      width: `${sub.readiness}%`,
                                       backgroundColor: sub.color,
                                     }}
                                   ></div>

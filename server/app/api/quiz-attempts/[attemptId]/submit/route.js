@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/db";
 import { getAuthUser } from "@/lib/authHelper";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
 import QuizAttempt from "@/models/QuizAttempt";
+import Session from "@/models/Session";
 
 export async function PUT(request, { params }) {
   try {
@@ -17,11 +18,24 @@ export async function PUT(request, { params }) {
     // If simply marking as finished
     if (isFinished) {
       const finishedAttempt = await QuizAttempt.findOneAndUpdate(
-        { _id: attemptId, userId: userPayload.userId },
+        { _id: attemptId, userId: userPayload.userId, status: 'in_progress' },
         { $set: { status: 'completed' } },
         { new: true }
       );
       if (!finishedAttempt) return errorResponse("Attempt not found", "NOT_FOUND", 404);
+
+      try {
+        await Session.create({
+          userId: userPayload.userId,
+          topicId: finishedAttempt.topicId,
+          type: 'quiz',
+          score: finishedAttempt.score,
+          totalQuestions: finishedAttempt.answers.length
+        });
+      } catch (sessionErr) {
+        console.error("Failed to create session for completed quiz:", sessionErr);
+      }
+
       return successResponse({ attempt: finishedAttempt });
     }
 

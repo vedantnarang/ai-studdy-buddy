@@ -79,15 +79,21 @@ const AppLayout = () => {
 
         <div className="flex items-center gap-4 md:gap-6 ml-auto">
           {/* Streak Badge */}
-          <div 
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-on-primary-container"
-            style={{ backgroundColor: streak > 0 ? '#dbe1ff' : '#f0f4f7', color: streak > 0 ? '#0048bf' : '#717c82' }}
-          >
-            <span className={`material-symbols-outlined text-lg ${streak > 0 ? 'filled-icon text-orange-500' : ''}`}>
-              local_fire_department
-            </span>
-            <span className="font-bold hidden sm:inline">{streak} day streak</span>
-            <span className="font-bold sm:hidden">{streak}</span>
+          <div className="relative group/streak">
+            <div 
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-on-primary-container cursor-default"
+              style={{ backgroundColor: streak > 0 ? '#dbe1ff' : '#f0f4f7', color: streak > 0 ? '#0048bf' : '#717c82' }}
+            >
+              <span className={`material-symbols-outlined text-lg ${streak > 0 ? 'filled-icon text-orange-500' : ''}`}>
+                local_fire_department
+              </span>
+              <span className="font-bold hidden sm:inline">{streak} day streak</span>
+              <span className="font-bold sm:hidden">{streak}</span>
+            </div>
+            <div className="absolute top-full right-0 mt-2 w-64 p-3 bg-blue-500 dark:bg-gray-800 text-white text-xs rounded-xl shadow-xl opacity-0 invisible group-hover/streak:opacity-100 group-hover/streak:visible transition-all duration-500 pointer-events-none">
+              <p className="font-semibold mb-1">🔥 How streak work</p>
+              <p className="text-gray-300 leading-relaxed pt-0.5">Complete quizzes or review flashcards daily to keep your streak alive. Miss a day and it resets!</p>
+            </div>
           </div>
 
           {/* Dark Mode Toggle */}
