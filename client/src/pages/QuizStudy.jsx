@@ -1,13 +1,15 @@
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuizSession } from '../hooks/useQuizSession';
 import { useTopic } from '../hooks/useTopic';
 import QuizQuestion from '../components/QuizQuestion';
 
 const QuizStudy = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  // Fetch topic name for the top bar
   const { topic } = useTopic(id);
+
+  const specificQuizId = searchParams.get('quizId');
 
   const {
     isLoading,
@@ -24,7 +26,7 @@ const QuizStudy = () => {
     selectAnswer,
     nextQuestion,
     resetSession
-  } = useQuizSession(id);
+  } = useQuizSession(id, specificQuizId);
 
   if (isLoading) {
     return (

@@ -16,37 +16,62 @@ export async function GET(request, { params }) {
       return errorResponse("Invalid topic ID", "VALIDATION_ERROR", 400);
     }
 
-    // Fetch the original quiz to reference the total question count
-    const quiz = await Quiz.findOne({ topicId });
-    const totalQuestions = quiz ? quiz.questions.length : 0;
+    // Fetch ALL quizzes for this topic
+    const quizzes = await Quiz.find({ topicId, userId: userPayload.userId })
+      .sort({ createdAt: -1 })
+      .lean();
 
+    // Fetch all completed attempts for this topic
     const attempts = await QuizAttempt.find({ 
       topicId, 
       userId: userPayload.userId,
       status: 'completed'
     }).sort({ createdAt: -1 }).lean();
 
-    // Group attempts by quizId to return only unique quizzes with their most recent attempt
+    // Build groups starting from quizzes (so quizzes with 0 attempts still show)
     const quizGroups = {};
-    attempts.forEach(attempt => {
-      const qId = attempt.quizId.toString();
-      if (!quizGroups[qId]) {
-        quizGroups[qId] = {
-          quizId: qId,
-          mostRecentAttempt: {
-            ...attempt,
-            totalQuestions: totalQuestions > 0 ? totalQuestions : attempt.answers.length
-          },
-          totalAttempts: 1
-        };
-      } else {
-        quizGroups[qId].totalAttempts++;
-      }
+    quizzes.forEach(q => {
+      quizGroups[q._id.toString()] = {
+        quizId: q._id.toString(),
+        quizCreatedAt: q.createdAt,
+        totalQuestions: q.questions.length,
+        mostRecentAttempt: null,
+        allAttempts: [],
+        totalAttempts: 0
+      };
     });
 
-    const uniqueQuizzes = Object.values(quizGroups);
+    // Fill in attempts
+    attempts.forEach(attempt => {
+      const qId = attempt.quizId.toString();
+      const group = quizGroups[qId];
+      if (!group) return; // Quiz was deleted, skip orphaned attempts
 
-    return successResponse({ attempts: uniqueQuizzes, rawAttemptsCount: attempts.length });
+      const totalQ = group.totalQuestions || attempt.answers.length;
+      const attemptData = {
+        _id: attempt._id,
+        score: attempt.score,
+        totalQuestions: totalQ,
+        createdAt: attempt.createdAt,
+      };
+
+      if (!group.mostRecentAttempt) {
+        group.mostRecentAttempt = attemptData;
+      }
+      group.allAttempts.push(attemptData);
+      group.totalAttempts++;
+    });
+
+    // Sort newest quiz first
+    const result = Object.values(quizGroups).sort(
+      (a, b) => new Date(b.quizCreatedAt) - new Date(a.quizCreatedAt)
+    );
+
+    return successResponse({ 
+      attempts: result, 
+      totalQuizzes: quizzes.length,
+      rawAttemptsCount: attempts.length 
+    });
   } catch (error) {
     console.error("Fetch quiz history error:", error);
     return errorResponse("Failed to fetch quiz history", "FETCH_FAILED", 500);

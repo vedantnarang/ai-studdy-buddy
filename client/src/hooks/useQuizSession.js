@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
-export const useQuizSession = (topicId) => {
+export const useQuizSession = (topicId, quizId = null) => {
   const [quiz, setQuiz] = useState(null);
   const [attemptId, setAttemptId] = useState(null);
   const [answersMap, setAnswersMap] = useState({}); // Stores all past answers: { questionId: { index, isCorrect } }
@@ -21,9 +21,15 @@ export const useQuizSession = (topicId) => {
     const initSession = async () => {
       try {
         setIsLoading(true);
-        // Step A: Fetch Quiz
-        const quizRes = await api.get(`/topics/${topicId}/quiz`);
-        const fetchedQuiz = quizRes.data?.data?.quiz || quizRes.data?.quiz;
+        // Step A: Fetch Quiz (specific quiz if quizId provided, else latest)
+        let fetchedQuiz;
+        if (quizId) {
+          const quizRes = await api.get(`/topics/${topicId}/quizzes/${quizId}`);
+          fetchedQuiz = quizRes.data?.data?.quiz || quizRes.data?.quiz;
+        } else {
+          const quizRes = await api.get(`/topics/${topicId}/quiz`);
+          fetchedQuiz = quizRes.data?.data?.quiz || quizRes.data?.quiz;
+        }
         if (!fetchedQuiz) {
           if (isMounted) setIsLoading(false);
           return;
@@ -83,7 +89,7 @@ export const useQuizSession = (topicId) => {
     }
 
     return () => { isMounted = false; };
-  }, [topicId]);
+  }, [topicId, quizId]);
 
   // 2. Select an Answer
   const selectAnswer = useCallback(async (optionIndex) => {

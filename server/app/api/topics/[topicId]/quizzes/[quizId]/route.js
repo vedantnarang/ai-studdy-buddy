@@ -5,6 +5,30 @@ import Quiz from "@/models/Quiz";
 import QuizAttempt from "@/models/QuizAttempt";
 import Topic from "@/models/Topic";
 
+export async function GET(request, { params }) {
+  try {
+    const userPayload = await getAuthUser(request);
+    if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
+
+    await connectDB();
+    const { topicId, quizId } = await params;
+
+    if (!/^[0-9a-fA-F]{24}$/.test(topicId) || !/^[0-9a-fA-F]{24}$/.test(quizId)) {
+      return errorResponse("Invalid ID", "VALIDATION_ERROR", 400);
+    }
+
+    const quiz = await Quiz.findOne({ _id: quizId, topicId, userId: userPayload.userId });
+    if (!quiz) {
+      return errorResponse("Quiz not found", "NOT_FOUND", 404);
+    }
+
+    return successResponse({ quiz });
+  } catch (error) {
+    console.error("Fetch quiz error:", error);
+    return errorResponse(error.message || "Failed to fetch quiz", "FETCH_FAILED", 500);
+  }
+}
+
 export async function DELETE(request, { params }) {
   try {
     const userPayload = await getAuthUser(request);
