@@ -31,7 +31,6 @@ const SubjectFlashcardReview = () => {
 
   useEffect(() => {
     fetchFlashcards();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   if (loading) {
@@ -95,7 +94,6 @@ const SubjectFlashcardReview = () => {
           {subject.title}
         </button>
         <h1 className="font-headline text-4xl md:text-5xl font-extrabold tracking-tight text-on-background dark:text-gray-100 mb-4 flex items-center justify-center md:justify-start gap-4">
-          <span className="w-6 h-12 rounded-lg shrink-0 shadow-sm" style={{ backgroundColor: subject.color || '#0053db' }}></span>
           Flashcard Experience
         </h1>
         <p className="text-tertiary dark:text-gray-400 font-label text-base md:text-lg max-w-2xl">
@@ -118,7 +116,7 @@ const SubjectFlashcardReview = () => {
               <section key={group.topicId} className="space-y-8 relative">
                 
                 {/* Topic Heading Strip */}
-                <div className="flex items-center justify-between border-b-2 border-surface-container-high dark:border-gray-800 pb-4 sticky top-16 bg-background dark:bg-[#0b0f10] z-20 shadow-[0_10px_10px_-10px_rgba(0,0,0,0.05)]">
+                <div className="flex items-center justify-between border-b-2 border-surface-container-high dark:border-gray-800 p-4 sticky top-16 bg-background dark:bg-[#0b0f10] z-20 shadow-[0_10px_10px_-10px_rgba(0,0,0,0.05)]">
                   <h2 className="text-2xl md:text-3xl font-extrabold font-headline text-on-surface dark:text-gray-100 flex items-center gap-3">
                     <span 
                       className="flex items-center justify-center w-8 h-8 rounded-full bg-surface-container-high dark:bg-gray-800"

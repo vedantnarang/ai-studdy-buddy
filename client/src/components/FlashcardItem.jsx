@@ -1,6 +1,6 @@
 import React from "react";
 
-const FlashcardItem = ({ card, isFlipped, onFlip, themeColor }) => {
+const FlashcardItem = ({ card, isFlipped, onFlip, themeColor, isMissed }) => {
   const fallbackColor = "#0053db";
   const effectiveColor = themeColor || fallbackColor;
 
@@ -13,13 +13,23 @@ const FlashcardItem = ({ card, isFlipped, onFlip, themeColor }) => {
       {/* Background Decoration (The Editorial Depth from Stitch) */}
       <div className="absolute inset-0 bg-surface-container-low dark:bg-gray-900 rounded-[2rem] scale-95 translate-y-4 opacity-70"></div>
 
+      {/* Missed indicator badge */}
+      {isMissed && (
+        <div className="absolute -top-2 -right-2 z-30 flex items-center gap-1 bg-red-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-lg shadow-red-500/30 animate-in fade-in zoom-in-90 duration-300">
+          <span className="material-symbols-outlined text-xs">priority_high</span>
+          Needs Review
+        </div>
+      )}
+
       {/* The 3D Rotating Container */}
       <div
-        className="relative w-full h-full rounded-[2rem] flex flex-col transition-transform duration-500 hover:scale-[1.01] active:scale-[0.99]"
+        className={`relative w-full h-full rounded-[2rem] flex flex-col transition-transform duration-500 hover:scale-[1.01] active:scale-[0.99] ${isMissed ? 'ring-2 ring-red-500/60 ring-offset-2 ring-offset-transparent' : ''}`}
         style={{
           transformStyle: "preserve-3d",
           transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
-          boxShadow: `0 20px 40px -15px ${effectiveColor}30`,
+          boxShadow: isMissed
+            ? `0 20px 40px -15px rgba(239, 68, 68, 0.35), 0 0 0 1px rgba(239, 68, 68, 0.15)`
+            : `0 20px 40px -15px ${effectiveColor}30`,
         }}
       >
         {/* Front - Question */}

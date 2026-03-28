@@ -13,6 +13,14 @@ export const useFlashcardSession = (topicId, flashcards, onComplete) => {
     if (isKnown) {
       setCorrectCount(prev => prev + 1);
     }
+
+    // Persist per-card difficulty update
+    const currentCard = flashcards[currentIndex];
+    if (currentCard?._id) {
+      api.patch(`/flashcards/${currentCard._id}`, { isCorrect: isKnown }).catch(err => {
+        console.error("Failed to update flashcard difficulty", err);
+      });
+    }
     
     setIsFlipped(false);
     
@@ -40,7 +48,7 @@ export const useFlashcardSession = (topicId, flashcards, onComplete) => {
         }
       }
     }, 150); // Wait for the reverse flip transition
-  }, [currentIndex, flashcards.length, correctCount, topicId, onComplete]);
+  }, [currentIndex, flashcards, correctCount, topicId, onComplete]);
 
   const resetSession = useCallback(() => {
      setCurrentIndex(0);
