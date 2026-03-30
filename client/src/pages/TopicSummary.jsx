@@ -3,12 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTopic } from '../hooks/useTopic';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useReactToPrint } from 'react-to-print';
 import rehypeRaw from 'rehype-raw';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import { formatMathForMarkdown } from '../utils/formatMathForMarkdown';
 
 const TopicSummary = () => {
   const { id } = useParams();
@@ -66,6 +70,15 @@ const TopicSummary = () => {
   const handleExportPDF = useReactToPrint({
     contentRef: printRef,
     documentTitle: topic ? `${topic.title}_Summary` : 'Topic_Summary',
+    pageStyle: `
+      @page {
+        margin: 30px;
+      }
+      body {
+        padding: 30px;
+        box-sizing: border-box;
+      }
+    `,
     onAfterPrint: () => toast.success('Exported to PDF!'),
   });
 
@@ -113,16 +126,36 @@ const TopicSummary = () => {
     const textarea = textareaRef.current;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const selectedText = editValue.substring(start, end);
+    const originalText = editValue.substring(start, end);
+    
+    // Trim selection to ensure markdown characters are adjacent to text
+    const trimmedText = originalText.trim();
+    const leadingWhitespace = originalText.match(/^\s*/)[0];
+    const trailingWhitespace = originalText.match(/\s*$/)[0];
+
+    // Detect structural markers (Heading markers like ###, list bullets like -, etc.)
+    // We want to keep these OUTSIDE the formatting (e.g., ### <mark>Text</mark> instead of <mark>### Text</mark>)
+    const markerMatch = trimmedText.match(/^(#{1,6}\s+|>\s+|-\s+|\*\s+|\+\s+|\d+\.\s+)/);
+    let markers = "";
+    let contentToWrap = trimmedText;
+
+    if (markerMatch) {
+      markers = markerMatch[0];
+      contentToWrap = trimmedText.substring(markers.length);
+    }
     
     // If no text is selected, just insert the formatting tags and put cursor between them
-    const newText = editValue.substring(0, start) + prefix + selectedText + suffix + editValue.substring(end);
+    const formattedPart = markers + prefix + contentToWrap + suffix;
+    const newText = editValue.substring(0, start) + leadingWhitespace + formattedPart + trailingWhitespace + editValue.substring(end);
+    
     setEditValue(newText);
     
     // Set cursor focus back after React state updates
     setTimeout(() => {
       textarea.focus();
-      textarea.setSelectionRange(start + prefix.length, end + prefix.length);
+      const newCursorStart = start + leadingWhitespace.length + markers.length + prefix.length;
+      const newCursorEnd = start + leadingWhitespace.length + markers.length + prefix.length + contentToWrap.length;
+      textarea.setSelectionRange(newCursorStart, newCursorEnd);
     }, 0);
   };
 
@@ -239,6 +272,15 @@ const TopicSummary = () => {
             border-radius: 0.25em;
             font-weight: 600;
           }
+          /* Explicit overrides to guarantee bold/italic visibility in prose */
+          .prose strong {
+            font-weight: 800 !important;
+            color: inherit !important;
+          }
+          .prose em {
+            font-style: italic !important;
+            color: inherit !important;
+          }
         `}} />
         
         {isEditing ? (
@@ -246,14 +288,14 @@ const TopicSummary = () => {
             {/* Custom Toolbar */}
             <div className="flex items-center gap-2 p-2 px-4 border-b border-gray-200 dark:border-gray-700 bg-surface-container-low dark:bg-gray-800 flex-wrap">
               <button 
-                onClick={() => applyFormat('**', '**')}
+                onClick={() => applyFormat('<strong>', '</strong>')}
                 className="w-8 h-8 flex items-center justify-center font-bold text-on-surface dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
                 title="Bold (Selection or Cursor)"
               >
                 B
               </button>
               <button 
-                onClick={() => applyFormat('*', '*')}
+                onClick={() => applyFormat('<em>', '</em>')}
                 className="w-8 h-8 flex items-center justify-center italic font-serif font-bold text-on-surface dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
                 title="Italic (Selection or Cursor)"
               >
@@ -280,12 +322,13 @@ const TopicSummary = () => {
             />
           </div>
         ) : (
-          <div ref={printRef} className="prose custom-highlight prose-slate dark:prose-invert prose-lg max-w-none font-body text-gray-800 dark:text-gray-200 prose-headings:font-headline prose-headings:font-bold prose-a:text-tertiary prose-h2:text-tertiary prose-code:bg-surface-container-high dark:prose-code:bg-gray-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md">
+          <div ref={printRef} className="prose prose-indigo dark:prose-invert prose-lg max-w-none font-body text-gray-800 dark:text-gray-200 prose-headings:font-headline prose-headings:font-bold prose-a:text-tertiary prose-h2:text-tertiary prose-code:bg-surface-container-high dark:prose-code:bg-gray-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md">
             <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw]}
+              remarkPlugins={[remarkGfm, remarkMath]}
+              remarkRehypeOptions={{ allowDangerousHtml: true }}
+              rehypePlugins={[rehypeRaw, rehypeKatex]}
               components={{
-                code({node, inline, className, children, ...props}) {
+                code({inline, className, children, ...props}) {
                   const match = /language-(\w+)/.exec(className || '')
                   return !inline && match ? (
                     <SyntaxHighlighter
@@ -305,7 +348,7 @@ const TopicSummary = () => {
                 }
               }}
             >
-              {topic?.summary || '*No deep dive summary generated yet.*'}
+              {formatMathForMarkdown(topic?.summary || '*No deep dive summary generated yet.*')}
             </ReactMarkdown>
           </div>
         )}

@@ -181,6 +181,13 @@ code {
   background: var(--code-bg);
 }
 
+.prose strong {
+    font-weight: 700 !important;
+}
+.prose em {
+    font-style: italic !important;
+}
+
 .glass-card {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(12px);

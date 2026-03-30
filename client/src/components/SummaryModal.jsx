@@ -1,11 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
+import 'katex/dist/katex.min.css';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useReactToPrint } from 'react-to-print';
 import MDEditor from '@uiw/react-md-editor';
 import toast from 'react-hot-toast';
+import { formatMathForMarkdown } from '../utils/formatMathForMarkdown';
 
 const SummaryModal = ({ summary, onClose, onSave, saving }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -130,9 +135,11 @@ const SummaryModal = ({ summary, onClose, onSave, saving }) => {
               {/* Ref wrapper for printing capability */}
               <div ref={printRef} className="prose prose-indigo prose-img:rounded-xl max-w-none dark:prose-invert">
                 <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
+                  remarkPlugins={[remarkGfm, remarkMath]}
+                  remarkRehypeOptions={{ allowDangerousHtml: true }}
+                  rehypePlugins={[rehypeRaw, rehypeKatex]}
                   components={{
-                    code({node, inline, className, children, ...props}) {
+                    code({inline, className, children, ...props}) {
                       const match = /language-(\w+)/.exec(className || '')
                       return !inline && match ? (
                         <SyntaxHighlighter
@@ -152,7 +159,7 @@ const SummaryModal = ({ summary, onClose, onSave, saving }) => {
                     }
                   }}
                 >
-                  {summary || '*No summary available.*'}
+                  {formatMathForMarkdown(summary || '*No summary available.*')}
                 </ReactMarkdown>
               </div>
             </div>
