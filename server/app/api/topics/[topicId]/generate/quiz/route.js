@@ -45,21 +45,19 @@ export async function POST(request, { params }) {
       return successResponse({ quiz: existingQuiz, cached: true });
     }
 
-    // Combine typed notes + all source document texts
+    // Combine typed notes + all source document texts + all image texts
     const allNotes = [
       topic.notes,
-      ...(topic.sourceDocuments || []).map(d => d.extractedText)
+      ...(topic.sourceDocuments || []).map(d => d.extractedText),
+      ...(topic.sourceImages || []).map(img => img.extractedText)
     ].filter(text => text && text.trim().length > 0).join('\n\n');
 
-    // Hard limit: error if more than 3 images
-    const imageUrls = (topic.sourceImages || []).map(img => img.url);
+    // We no longer send image URLs directly to the generative AI. 
+    // Vision extraction is handled at upload or via manual entry.
+    const imageUrls = [];
 
-    if (imageUrls.length > 3) {
-      return errorResponse("Image limit exceeded (max 3).", "UPGRADE_REQUIRED", 403);
-    }
-
-    if (!allNotes && imageUrls.length === 0) {
-      return errorResponse("Topic has no notes, documents, or images to generate from", "NO_CONTENT", 400);
+    if (!allNotes) {
+      return errorResponse("Topic has no notes, documents, or image text to generate from", "NO_CONTENT", 400);
     }
 
     const questions = await generateQuiz(allNotes, imageUrls);

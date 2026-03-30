@@ -69,7 +69,12 @@ export const AuthProvider = ({ children }) => {
       navigate('/dashboard');
       return { success: true };
     } catch (error) {
-      return { success: false, error: error.response?.data?.message || 'Login failed' };
+      const respData = error.response?.data;
+      return { 
+        success: false, 
+        error: respData?.error?.message || respData?.message || 'Login failed',
+        errorCode: respData?.error?.code 
+      };
     }
   };
 

@@ -17,7 +17,7 @@ export async function POST(request) {
 
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
-      return errorResponse("Invalid credentials.", "UNAUTHORIZED", 401);
+      return errorResponse("This email has not been registered.", "USER_NOT_FOUND", 401);
     }
 
     const isMatch = await bcrypt.compare(password, user.password);

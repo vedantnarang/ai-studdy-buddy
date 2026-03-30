@@ -62,6 +62,8 @@ const AIPanel = ({ topic, onGenerated }) => {
          navigate('/pricing');
       } else if (err.response?.status === 429) {
          toast.error("AI is taking a breather, try again in 30s");
+      } else if (err.response?.status === 500) {
+         toast.error("AI model is facing too much traffic right now. Please retry after sometime.");
       } else {
          toast.error(err.response?.data?.message || err.message || `Failed to generate ${type}`);
       }

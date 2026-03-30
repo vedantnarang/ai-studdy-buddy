@@ -104,8 +104,14 @@ export const useTopic = (topicId) => {
       toast.success(res.data.data?.message || 'Documents uploaded successfully!');
       return { success: true, data: res.data.data };
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message || 'Failed to upload documents');
-      return { success: false, error: err.response?.data?.message || err.message };
+      let errorMsg;
+      if (err.response?.status === 500) {
+        errorMsg = "AI model is facing too much traffic right now. Please retry after sometime.";
+      } else {
+        errorMsg = err.response?.data?.message || err.message || 'Failed to upload documents';
+      }
+      toast.error(errorMsg);
+      return { success: false, error: errorMsg };
     }
   };
 
@@ -166,7 +172,12 @@ export const useTopic = (topicId) => {
       toast.success('Text extracted successfully!');
       return { success: true, data: res.data.data };
     } catch (err) {
-      const errorMsg = err.response?.data?.message || err.message || 'Extraction failed. Model might still be busy.';
+      let errorMsg;
+      if (err.response?.status === 500) {
+        errorMsg = "AI model is facing too much traffic right now. Please retry after sometime.";
+      } else {
+        errorMsg = err.response?.data?.message || err.message || 'Extraction failed. Model might still be busy.';
+      }
       toast.error(errorMsg);
       return { success: false, error: errorMsg };
     }

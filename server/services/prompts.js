@@ -33,7 +33,12 @@ export function buildQuizPrompt(notes, imageCount = 0) {
 ${notes?.trim() ? `Text notes:\n${notes}` : "No text notes provided."}
 ${imageCount > 0 ? `\nAlso analyze the ${imageCount} attached image(s) for additional content.` : ""}
 
-Make the wrong options plausible but clearly incorrect to someone who studied the material.`;
+Make the wrong options plausible but clearly incorrect to someone who studied the material.
+
+CRITICAL INSTRUCTIONS FOR VALID JSON OUTPUT:
+1. You MUST provide exactly 4 options in your 'options' array.
+2. The 'correctIndex' MUST be a single integer between 0 and 3. Do not use string numbers (e.g. use 2, not "2").
+3. Ensure the JSON is structurally valid and complete before stopping.`;
 }
 
 /**

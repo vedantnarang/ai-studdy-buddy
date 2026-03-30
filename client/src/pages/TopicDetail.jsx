@@ -231,9 +231,15 @@ const TopicDetail = () => {
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-on-surface dark:text-white truncate">{img.fileName || (img.url ? decodeURIComponent(img.url.split('/').pop()) : 'Image')}</p>
-                      <p className="text-xs text-on-surface-variant mt-1 flex items-center gap-2">
+                      <p className="text-xs text-on-surface-variant mt-1 mb-1 flex items-center gap-2">
                         <span className="font-mono uppercase">image</span>
                       </p>
+                      {!img.extractedText && (
+                        <p className="text-xs text-error flex items-center gap-1 font-medium bg-error-container/20 w-fit px-2 py-0.5 rounded-md">
+                          <span className="material-symbols-outlined text-[12px]">error</span>
+                          No text - Generative AI will ignore this image
+                        </p>
+                      )}
                     </div>
                     <button
                       onClick={(e) => handleImageDelete(e, img.publicId || img._id)}

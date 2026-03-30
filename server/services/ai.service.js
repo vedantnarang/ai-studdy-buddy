@@ -28,7 +28,11 @@ async function withFallback(aiCall) {
   try {
     return await aiCall(getModel(false));
   } catch (error) {
-    console.warn(`Attempt with ${PRIMARY_MODEL} failed, trying fallback (${FALLBACK_MODEL})...`, error.message);
+    console.warn(`Attempt with ${PRIMARY_MODEL} failed, trying fallback (${FALLBACK_MODEL}) in 1s...`, error.message);
+    
+    // Add 1s delay to help 'clear' temporary rate limits
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     try {
       return await aiCall(getModel(true));
     } catch (fallbackError) {

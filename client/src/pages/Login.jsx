@@ -17,7 +17,15 @@ const Login = () => {
 
     const result = await login(email, password);
     if (!result.success) {
-      setError(result.error || 'Failed to login');
+      if (result.errorCode === 'USER_NOT_FOUND') {
+        setError(
+          <span>
+            {result.error} <Link to="/register" className="underline font-bold">Sign up here</Link>
+          </span>
+        );
+      } else {
+        setError(result.error);
+      }
       setLoading(false);
     }
   };

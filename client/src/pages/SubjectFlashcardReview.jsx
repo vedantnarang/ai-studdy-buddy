@@ -164,6 +164,7 @@ const SubjectFlashcardReview = () => {
                           themeColor={subject.color}
                           isFlipped={flippedCardId === card._id}
                           onFlip={() => handleCardFlip(card._id)}
+                          isMissed={card.difficultyBox > 1}
                         />
                       </div>
                     ))}
