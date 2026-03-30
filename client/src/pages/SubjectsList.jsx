@@ -41,6 +41,7 @@ const SubjectsList = () => {
   const [newColor, setNewColor] = useState("#0053db");
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [subjectToDelete, setSubjectToDelete] = useState(null);
@@ -48,7 +49,15 @@ const SubjectsList = () => {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!newTitle.trim()) return;
+    setCreateError("");
+    
+    // Manual validation
+    if (!newTitle.trim()) {
+      setFieldErrors({ title: "Subject title is required" });
+      return;
+    }
+    
+    setFieldErrors({});
 
     setCreateLoading(true);
     setCreateError("");
@@ -58,6 +67,7 @@ const SubjectsList = () => {
       setIsCreating(false);
       setNewTitle("");
       setNewDescription("");
+      setFieldErrors({});
       refreshAnalytics();
     } else {
       setCreateError(result.error);
@@ -152,12 +162,20 @@ const SubjectsList = () => {
                   <input
                     type="text"
                     value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
+                    onChange={(e) => {
+                      setNewTitle(e.target.value);
+                      if (fieldErrors.title) setFieldErrors(prev => ({ ...prev, title: null }));
+                    }}
                     placeholder="e.g. Molecular Biology"
-                    className="w-full px-4 py-3 bg-surface-container-low border-none rounded-xl text-on-surface focus:ring-2 focus:ring-primary/40 outline-none transition-all"
+                    className={`w-full px-4 py-3 bg-surface-container-low border-2 rounded-xl text-on-surface focus:ring-2 focus:border-transparent outline-none transition-all ${
+                      fieldErrors.title 
+                        ? 'border-red-500 focus:ring-red-500/40' 
+                        : 'border-transparent focus:ring-primary/40'
+                    }`}
                     required
                     autoFocus
                   />
+                  {fieldErrors.title && <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.title}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-on-surface-variant mb-3">

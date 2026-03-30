@@ -17,6 +17,7 @@ const SubjectDetail = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [createLoading, setCreateLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [topicToDelete, setTopicToDelete] = useState(null);
@@ -45,8 +46,14 @@ const SubjectDetail = () => {
 
   const handleCreateTopic = async (e) => {
     e.preventDefault();
-    if (!newTitle.trim()) return;
     
+    // Manual validation
+    if (!newTitle.trim()) {
+      setFieldErrors({ title: "Topic title is required" });
+      return;
+    }
+    
+    setFieldErrors({});
     setCreateLoading(true);
     const result = await createTopic(id, newTitle);
     
@@ -54,6 +61,7 @@ const SubjectDetail = () => {
       setTopics((prev) => [...prev, result.data]);
       setIsCreating(false);
       setNewTitle('');
+      setFieldErrors({});
     }
     setCreateLoading(false);
   };
@@ -153,12 +161,20 @@ const SubjectDetail = () => {
               <input 
                 type="text" 
                 value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
+                onChange={(e) => {
+                  setNewTitle(e.target.value);
+                  if (fieldErrors.title) setFieldErrors(prev => ({ ...prev, title: null }));
+                }}
                 placeholder="e.g. Newton's Laws of Motion"
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-shadow"
+                className={`w-full px-4 py-2 rounded-lg border outline-none transition-all ${
+                  fieldErrors.title 
+                    ? 'border-red-500 focus:ring-2 focus:ring-red-500/40' 
+                    : 'border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500'
+                } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
                 required
                 autoFocus
               />
+              {fieldErrors.title && <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.title}</p>}
             </div>
             <div className="flex gap-3 justify-end mt-4">
               <button 

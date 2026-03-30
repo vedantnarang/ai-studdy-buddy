@@ -13,6 +13,7 @@ const Profile = () => {
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [isSaving, setIsSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const nameInputRef = useRef(null);
   const emailInputRef = useRef(null);
@@ -26,11 +27,18 @@ const Profile = () => {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim()) {
-      toast.error('Name and email are required');
+    
+    // Manual validation
+    const newFieldErrors = {};
+    if (!name.trim()) newFieldErrors.name = 'Full name is required';
+    if (!email.trim()) newFieldErrors.email = 'Email is required';
+    
+    if (Object.keys(newFieldErrors).length > 0) {
+      setFieldErrors(newFieldErrors);
       return;
     }
-
+    
+    setFieldErrors({});
     setIsSaving(true);
     const result = await updateProfile(name, email);
     setIsSaving(false);
@@ -69,12 +77,18 @@ const Profile = () => {
                 <div className="group relative flex items-center">
                   <input 
                     ref={nameInputRef}
-                    className="w-full bg-surface-container-high dark:bg-slate-800 border-none rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-slate-700 transition-all font-headline text-lg font-semibold text-on-surface dark:text-white pr-12" 
+                    className={`w-full bg-surface-container-high dark:bg-slate-800 border-2 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-slate-700 transition-all font-headline text-lg font-semibold text-on-surface dark:text-white pr-12 ${
+                      fieldErrors.name ? 'border-red-500 ring-red-500/20' : 'border-transparent'
+                    }`} 
                     type="text" 
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (fieldErrors.name) setFieldErrors(prev => ({ ...prev, name: null }));
+                    }}
                     required
                   />
+                  {fieldErrors.name && <p className="absolute -bottom-5 left-1 text-[10px] text-red-500 font-bold uppercase tracking-widest">{fieldErrors.name}</p>}
                   <button 
                     type="button"
                     onClick={() => focusInput(nameInputRef)}
@@ -90,12 +104,18 @@ const Profile = () => {
                 <div className="group relative flex items-center">
                   <input 
                     ref={emailInputRef}
-                    className="w-full bg-surface-container-high dark:bg-slate-800 border-none rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-slate-700 transition-all font-body text-on-surface dark:text-white pr-12" 
+                    className={`w-full bg-surface-container-high dark:bg-slate-800 border-2 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-slate-700 transition-all font-body text-on-surface dark:text-white pr-12 ${
+                      fieldErrors.email ? 'border-red-500 ring-red-500/20' : 'border-transparent'
+                    }`} 
                     type="email" 
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: null }));
+                    }}
                     required
                   />
+                  {fieldErrors.email && <p className="absolute -bottom-5 left-1 text-[10px] text-red-500 font-bold uppercase tracking-widest">{fieldErrors.email}</p>}
                   <button 
                     type="button"
                     onClick={() => focusInput(emailInputRef)}
