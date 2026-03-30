@@ -17,22 +17,27 @@ export async function PATCH(request, { params }) {
     }
 
     const body = await request.json();
-    const { isCorrect } = body;
-
-    if (typeof isCorrect !== 'boolean') {
-      return errorResponse("isCorrect (boolean) is required", "VALIDATION_ERROR", 400);
-    }
+    const { isCorrect, resetDifficulty } = body;
 
     const flashcard = await Flashcard.findOne({ _id: flashcardId, userId: userPayload.userId });
     if (!flashcard) {
       return errorResponse("Flashcard not found", "NOT_FOUND", 404);
     }
 
-    // Update difficultyBox: missed → increase (harder), got it → decrease (easier)
-    if (isCorrect) {
-      flashcard.difficultyBox = Math.max(1, flashcard.difficultyBox - 1);
+    if (resetDifficulty === true) {
+      // If we just want to remove the 'needs review' state
+      flashcard.difficultyBox = 1;
     } else {
-      flashcard.difficultyBox = Math.min(5, flashcard.difficultyBox + 1);
+      if (typeof isCorrect !== 'boolean') {
+        return errorResponse("isCorrect (boolean) or resetDifficulty (boolean) is required", "VALIDATION_ERROR", 400);
+      }
+
+      // Update difficultyBox: missed → increase (harder), got it → decrease (easier)
+      if (isCorrect) {
+        flashcard.difficultyBox = Math.max(1, flashcard.difficultyBox - 1);
+      } else {
+        flashcard.difficultyBox = Math.min(5, flashcard.difficultyBox + 1);
+      }
     }
 
     await flashcard.save();

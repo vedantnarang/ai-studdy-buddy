@@ -58,9 +58,52 @@ const SubjectFlashcardReview = () => {
 
   const { subject, groupedFlashcards } = data;
 
-  const handleCardFlip = (cardId) => {
+  const handleCardFlip = async (cardId) => {
     // If clicking the currently flipped card, unflip it. Else flip the new one.
-    setFlippedCardId(prev => prev === cardId ? null : cardId);
+    if (flippedCardId === cardId) {
+      setFlippedCardId(null);
+      return;
+    }
+
+    setFlippedCardId(cardId);
+
+    // Find the card to check if we need to remove "needs review" tag locally and on the backend
+    let cardWasMissed = false;
+    let targetTopicId = null;
+
+    data.groupedFlashcards.forEach(group => {
+      const card = group.flashcards.find(c => c._id === cardId);
+      if (card && card.difficultyBox > 1) {
+        cardWasMissed = true;
+        targetTopicId = group.topicId;
+      }
+    });
+
+    if (cardWasMissed) {
+      // Optimistically update local UI so tag goes away
+      setData(prevData => {
+        const newData = { ...prevData };
+        newData.groupedFlashcards = newData.groupedFlashcards.map(group => {
+          if (group.topicId === targetTopicId) {
+            return {
+              ...group,
+              flashcards: group.flashcards.map(fc => 
+                fc._id === cardId ? { ...fc, difficultyBox: 1 } : fc
+              )
+            };
+          }
+          return group;
+        });
+        return newData;
+      });
+
+      // Update backend silently
+      try {
+        await api.patch(`/flashcards/${cardId}`, { resetDifficulty: true });
+      } catch (err) {
+        console.error("Failed to reset difficulty tag", err);
+      }
+    }
   };
 
   const handleRegenerateTopic = async (topicId) => {
