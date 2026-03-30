@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import FlashcardItem from '../components/FlashcardItem';
+import EditableFlashcard from '../components/EditableFlashcard';
 import toast from 'react-hot-toast';
 
 const SubjectFlashcardReview = () => {
@@ -12,6 +13,7 @@ const SubjectFlashcardReview = () => {
   const [error, setError] = useState(null);
   const [flippedCardId, setFlippedCardId] = useState(null);
   const [regeneratingTopicId, setRegeneratingTopicId] = useState(null);
+  const [editingTopicId, setEditingTopicId] = useState(null);
 
 
   const fetchFlashcards = async () => {
@@ -81,6 +83,64 @@ const SubjectFlashcardReview = () => {
     }
   };
 
+  const handleSaveFlashcard = async (topicId, flashcardId, newQuestion, newAnswer) => {
+    try {
+      await api.put(`/flashcards/${flashcardId}`, { question: newQuestion, answer: newAnswer });
+      toast.success("Flashcard updated!");
+      setData(prevData => {
+        const newData = { ...prevData };
+        newData.groupedFlashcards = newData.groupedFlashcards.map(group => {
+          if (group.topicId === topicId) {
+            return {
+              ...group,
+              flashcards: group.flashcards.map(fc => 
+                fc._id === flashcardId 
+                  ? { ...fc, question: newQuestion, answer: newAnswer, isEdited: true }
+                  : fc
+              )
+            };
+          }
+          return group;
+        });
+        return newData;
+      });
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to save flashcard');
+    }
+  };
+
+  const handleDeleteFlashcard = async (topicId, flashcardId) => {
+    try {
+      await api.delete(`/flashcards/${flashcardId}`);
+      toast.success("Flashcard deleted!");
+      
+      let topicBecameEmpty = false;
+
+      setData(prevData => {
+        const newData = { ...prevData };
+        newData.groupedFlashcards = newData.groupedFlashcards.map(group => {
+          if (group.topicId === topicId) {
+             const newCards = group.flashcards.filter(fc => fc._id !== flashcardId);
+             if (newCards.length === 0) topicBecameEmpty = true;
+            return {
+              ...group,
+              flashcards: newCards
+            };
+          }
+          return group;
+        }).filter(group => group.flashcards.length > 0);
+        return newData;
+      });
+
+      if (topicBecameEmpty && editingTopicId === topicId) {
+         setEditingTopicId(null);
+      }
+
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to delete flashcard');
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-12 pb-24 animate-in fade-in zoom-in-95 duration-500">
       
@@ -111,9 +171,14 @@ const SubjectFlashcardReview = () => {
         <div className="space-y-16 lg:space-y-24">
           {groupedFlashcards.map(group => {
             const isTopicRegenerating = regeneratingTopicId === group.topicId;
+            const isEditingThisTopic = editingTopicId === group.topicId;
+            const isOtherTopicEditing = editingTopicId !== null && editingTopicId !== group.topicId;
 
             return (
-              <section key={group.topicId} className="space-y-8 relative">
+              <section 
+                key={group.topicId} 
+                className={`space-y-8 relative transition-opacity duration-300 ${isOtherTopicEditing ? 'opacity-30 pointer-events-none' : ''}`}
+              >
                 
                 {/* Topic Heading Strip */}
                 <div className="flex items-center justify-between border-b-2 border-surface-container-high dark:border-gray-800 p-4 sticky top-16 bg-background dark:bg-[#0b0f10] z-20 shadow-[0_10px_10px_-10px_rgba(0,0,0,0.05)]">
@@ -127,21 +192,46 @@ const SubjectFlashcardReview = () => {
                     {group.topicTitle}
                   </h2>
 
-                  {/* Localized Regeneration Trigger */}
-                  <button
-                    onClick={() => handleRegenerateTopic(group.topicId)}
-                    disabled={regeneratingTopicId !== null && regeneratingTopicId !== group.topicId}
-                    className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-surface-container-lowest dark:bg-gray-800 hover:bg-surface-container-high dark:hover:bg-gray-700 text-on-surface-variant dark:text-gray-300 rounded-xl transition-all border border-gray-100 dark:border-gray-700 focus:outline-none focus:ring-2 disabled:opacity-50 group"
-                    style={{ '--tw-ring-color': subject.color || '#0053db' }}
-                    title="Regenerate flashcards for this topic"
-                  >
-                    <span className={`material-symbols-outlined text-[18px] group-hover:text-primary dark:group-hover:text-white ${isTopicRegenerating ? 'animate-spin text-primary' : ''}`}>
-                      sync
-                    </span>
-                    <span className="font-bold text-xs uppercase tracking-wider hidden sm:block group-hover:text-primary dark:group-hover:text-white">
-                      {isTopicRegenerating ? 'Working...' : 'Regenerate'}
-                    </span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {/* Edit Mode Toggle */}
+                    <button
+                      onClick={() => {
+                        setEditingTopicId(isEditingThisTopic ? null : group.topicId);
+                        setFlippedCardId(null);
+                      }}
+                      disabled={isTopicRegenerating}
+                      className={`flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-xl transition-all border focus:outline-none focus:ring-2 disabled:opacity-50 group font-bold text-xs tracking-wider ${
+                        isEditingThisTopic 
+                          ? `bg-[${subject.color || '#0053db'}] text-white border-transparent` 
+                          : `bg-surface-container-lowest dark:bg-gray-800 hover:bg-surface-container-high dark:hover:bg-gray-700 text-on-surface-variant dark:text-gray-300 border-gray-100 dark:border-gray-700`
+                      }`}
+                      style={isEditingThisTopic ? { backgroundColor: subject.color || '#0053db' } : { '--tw-ring-color': subject.color || '#0053db' }}
+                      title="Edit flashcards for this topic"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">
+                        {isEditingThisTopic ? 'task_alt' : 'edit'}
+                      </span>
+                      <span className="hidden sm:block uppercase">
+                        {isEditingThisTopic ? 'Done Editing' : 'Edit'}
+                      </span>
+                    </button>
+
+                    {/* Localized Regeneration Trigger */}
+                    <button
+                      onClick={() => handleRegenerateTopic(group.topicId)}
+                      disabled={regeneratingTopicId !== null || editingTopicId !== null}
+                      className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-surface-container-lowest dark:bg-gray-800 hover:bg-surface-container-high dark:hover:bg-gray-700 text-on-surface-variant dark:text-gray-300 rounded-xl transition-all border border-gray-100 dark:border-gray-700 focus:outline-none focus:ring-2 disabled:opacity-50 group"
+                      style={{ '--tw-ring-color': subject.color || '#0053db' }}
+                      title="Regenerate flashcards for this topic"
+                    >
+                      <span className={`material-symbols-outlined text-[18px] group-hover:text-primary dark:group-hover:text-white ${isTopicRegenerating ? 'animate-spin text-primary' : ''}`}>
+                        sync
+                      </span>
+                      <span className="font-bold text-xs uppercase tracking-wider hidden sm:block group-hover:text-primary dark:group-hover:text-white">
+                        {isTopicRegenerating ? 'Working...' : 'Regenerate'}
+                      </span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Localized Loading Overlay mapped precisely to the user's request */}
@@ -156,16 +246,25 @@ const SubjectFlashcardReview = () => {
                   )}
 
                   {/* Flashcard Grid Layout */}
-                  <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 lg:gap-10 transition-opacity duration-300 ${isTopicRegenerating ? 'opacity-30 pointer-events-none' : ''}`}>
+                  <div className={`grid gap-6 lg:gap-10 transition-opacity duration-300 ${isTopicRegenerating ? 'opacity-30 pointer-events-none' : ''} ${isEditingThisTopic ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4'}`}>
                     {group.flashcards.map((card, index) => (
-                      <div className="relative animate-in slide-in-from-bottom-8 fade-in" style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }} key={card._id}>
-                        <FlashcardItem 
-                          card={card}
-                          themeColor={subject.color}
-                          isFlipped={flippedCardId === card._id}
-                          onFlip={() => handleCardFlip(card._id)}
-                          isMissed={card.difficultyBox > 1}
-                        />
+                      <div className="relative animate-in slide-in-from-bottom-8 fade-in h-full" style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }} key={card._id}>
+                        {isEditingThisTopic ? (
+                           <EditableFlashcard
+                             card={card}
+                             themeColor={subject.color}
+                             onSave={(targetId, q, a) => handleSaveFlashcard(group.topicId, targetId, q, a)}
+                             onDelete={(targetId) => handleDeleteFlashcard(group.topicId, targetId)}
+                           />
+                        ) : (
+                           <FlashcardItem 
+                             card={card}
+                             themeColor={subject.color}
+                             isFlipped={flippedCardId === card._id}
+                             onFlip={() => handleCardFlip(card._id)}
+                             isMissed={card.difficultyBox > 1}
+                           />
+                        )}
                       </div>
                     ))}
                   </div>

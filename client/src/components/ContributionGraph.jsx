@@ -62,7 +62,7 @@ const ContributionGraph = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
         <div>
-          <h3 className="text-xl font-bold text-on-surface dark:text-white font-headline tracking-tight">Study Activity</h3>
+          <h3 className="text-xl font-bold text-on-surface dark:text-white font-headline tracking-tight">Quiz Activity</h3>
           <p className="text-sm text-on-surface-variant dark:text-gray-400 mt-0.5">Activity reflects quizzes taken per subject.</p>
         </div>
         {/* Legend */}
