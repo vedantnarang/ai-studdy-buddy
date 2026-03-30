@@ -70,9 +70,11 @@ export const useAnalytics = () => {
         validSessions.forEach(s => {
           const tId = s.topicId?._id || s.topicId;
           const tTitle = s.topicId?.title || 'Unknown Topic';
+          const tSubjectTitle = s.topicId?.subjectId?.title || null;
+          const tSubjectColor = s.topicId?.subjectId?.color || null;
           
           if (!topicStats[tId]) {
-            topicStats[tId] = { id: tId, title: tTitle, totalScore: 0, count: 0 };
+            topicStats[tId] = { id: tId, title: tTitle, totalScore: 0, count: 0, subjectTitle: tSubjectTitle, subjectColor: tSubjectColor };
           }
           topicStats[tId].totalScore += (s.score / s.totalQuestions) * 100;
           topicStats[tId].count++;

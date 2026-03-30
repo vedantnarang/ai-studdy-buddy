@@ -430,20 +430,31 @@ const SubjectsList = () => {
                     <div className="animate-in fade-in duration-500">
                       {weakTopics.length > 0 ? (
                         <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {weakTopics.map((topic) => (
+                          {weakTopics.map((topic) => {
+                            const accentColor = topic.subjectColor || "#0053db";
+                            const shadowColor = `${accentColor}40`;
+                            return (
                             <li
                               key={topic.id}
-                              className="flex flex-col gap-2 p-4 rounded-xl bg-surface-container-low border border-gray-50 dark:border-gray-700"
+                              className="flex flex-col gap-2 p-4 rounded-xl bg-surface-container-low border-2 transition-all duration-300 hover:-translate-y-1"
+                              style={{ borderColor: accentColor }}
+                              onMouseEnter={(e) => e.currentTarget.style.boxShadow = `0 8px 24px -4px ${shadowColor}`}
+                              onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
                             >
-                              <div className="flex justify-between items-center mb-1">
-                                <span className="text-sm font-bold text-on-surface truncate pr-4">
-                                  {topic.title}
-                                </span>
-                                <span className="text-xs font-black text-error">
+                              <div className="flex justify-between items-start mb-1">
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-bold text-on-surface truncate pr-4">
+                                    {topic.title}
+                                  </span>
+                                  <span className="text-[10px] font-black uppercase tracking-wider mt-0.5" style={{ color: accentColor }}>
+                                    {topic.subjectTitle || "Unknown Subject"}
+                                  </span>
+                                </div>
+                                <span className="text-xs font-black text-error mt-0.5">
                                   {Math.round(topic.avgScore)}%
                                 </span>
                               </div>
-                              <div className="w-full h-2.5 bg-surface-container-high rounded-full overflow-hidden">
+                              <div className="w-full h-2.5 bg-surface-container-high rounded-full overflow-hidden mt-1">
                                 <div
                                   className="h-full bg-error transition-all duration-1000 ease-out"
                                   style={{
@@ -452,7 +463,8 @@ const SubjectsList = () => {
                                 ></div>
                               </div>
                             </li>
-                          ))}
+                            );
+                          })}
                         </ul>
                       ) : (
                         <EmptyMetricState
@@ -468,10 +480,16 @@ const SubjectsList = () => {
                     <div className="animate-in fade-in duration-500">
                       {forgottenTopics.length > 0 ? (
                         <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {forgottenTopics.map((topic) => (
+                          {forgottenTopics.map((topic) => {
+                            const accentColor = topic.subjectColor || "#fbbf24";
+                            const shadowColor = `${accentColor}40`;
+                            return (
                             <li
                               key={topic.id}
-                              className="flex items-center justify-between p-4 rounded-xl bg-surface-container-low border border-amber-100 dark:border-amber-900/30"
+                              className="flex items-center justify-between p-4 rounded-xl bg-surface-container-low border-2 transition-all duration-300 hover:-translate-y-1"
+                              style={{ borderColor: accentColor }}
+                              onMouseEnter={(e) => e.currentTarget.style.boxShadow = `0 8px 24px -4px ${shadowColor}`}
+                              onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
                             >
                               <div className="flex items-center gap-4">
                                 <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
@@ -479,11 +497,14 @@ const SubjectsList = () => {
                                     timer
                                   </span>
                                 </div>
-                                <div>
-                                  <p className="text-sm font-bold text-on-surface">
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-bold text-on-surface">
                                     {topic.title}
-                                  </p>
-                                  <p className="text-[10px] text-tertiary mt-0.5">
+                                  </span>
+                                  <span className="text-[10px] font-black uppercase tracking-wider mt-0.5" style={{ color: accentColor }}>
+                                    {topic.subjectTitle || "Unknown Subject"}
+                                  </span>
+                                  <p className="text-[10px] text-tertiary mt-1">
                                     Last review:{" "}
                                     {new Date(
                                       topic.lastReviewed,
@@ -498,7 +519,8 @@ const SubjectsList = () => {
                                 Review
                               </Link>
                             </li>
-                          ))}
+                            );
+                          })}
                         </ul>
                       ) : (
                         <EmptyMetricState
@@ -514,14 +536,25 @@ const SubjectsList = () => {
                     <div className="animate-in fade-in duration-500">
                       {materialGaps.length > 0 ? (
                         <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {materialGaps.map((topic) => (
+                          {materialGaps.map((topic) => {
+                            const accentColor = topic.subjectColor || "#3b82f6";
+                            const shadowColor = `${accentColor}40`;
+                            return (
                             <li
                               key={topic.id}
-                              className="p-4 rounded-xl bg-surface-container-low border border-blue-50 dark:border-blue-900/10"
+                              className="p-4 rounded-xl bg-surface-container-low border-2 transition-all duration-300 hover:-translate-y-1"
+                              style={{ borderColor: accentColor }}
+                              onMouseEnter={(e) => e.currentTarget.style.boxShadow = `0 8px 24px -4px ${shadowColor}`}
+                              onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
                             >
-                              <p className="text-sm font-bold text-on-surface mb-3">
-                                {topic.title}
-                              </p>
+                              <div className="flex flex-col mb-3">
+                                <span className="text-sm font-bold text-on-surface">
+                                  {topic.title}
+                                </span>
+                                <span className="text-[10px] font-black uppercase tracking-wider mt-0.5" style={{ color: accentColor }}>
+                                  {topic.subjectTitle || "Unknown Subject"}
+                                </span>
+                              </div>
                               <div className="flex gap-2">
                                 {topic.missing.flashcards && (
                                   <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-bold rounded-md">
@@ -535,7 +568,8 @@ const SubjectsList = () => {
                                 )}
                               </div>
                             </li>
-                          ))}
+                            );
+                          })}
                         </ul>
                       ) : (
                         <EmptyMetricState

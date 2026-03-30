@@ -19,15 +19,22 @@ export async function GET(request) {
     const subjects = await Subject.find({ userId: userPayload.userId }).select('_id').lean();
     const validSubjectIds = new Set(subjects.map(s => s._id.toString()));
 
-    // Fetch sessions and populate topic
+    // Fetch sessions and populate topic, and nested populate subject
     const sessions = await Session.find({ userId: userPayload.userId })
-      .populate('topicId', 'title subjectId')
+      .populate({
+        path: 'topicId',
+        select: 'title subjectId',
+        populate: {
+          path: 'subjectId',
+          select: 'title color'
+        }
+      })
       .sort({ createdAt: -1 })
       .lean();
 
     // Filter to only include sessions for topics that belong to active subjects
     const filteredSessions = sessions.filter(s => {
-      return s.topicId && validSubjectIds.has(s.topicId.subjectId?.toString());
+      return s.topicId && s.topicId.subjectId && validSubjectIds.has(s.topicId.subjectId._id?.toString() || s.topicId.subjectId.toString());
     });
 
     return successResponse(filteredSessions, 200);

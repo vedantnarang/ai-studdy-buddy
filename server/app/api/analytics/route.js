@@ -24,6 +24,11 @@ export async function GET(request) {
     const validSubjectIds = new Set(subjects.map(s => s._id.toString()));
     const validTopicIds = new Set(topics.filter(t => validSubjectIds.has(t.subjectId?.toString())).map(t => t._id.toString()));
 
+    const subjectMap = {};
+    subjects.forEach(s => {
+      subjectMap[s._id.toString()] = { title: s.title, color: s.color };
+    });
+
     // Filter topics and sessions to only include those belonging to ACTIVE subjects
     const activeTopics = topics.filter(t => validSubjectIds.has(t.subjectId?.toString()));
     const activeSessions = sessions.filter(s => {
@@ -48,11 +53,16 @@ export async function GET(request) {
         const lastSession = lastSessionPerTopic[t._id.toString()];
         return lastSession && new Date(lastSession) < fourDaysAgo;
       })
-      .map(t => ({
-        id: t._id,
-        title: t.title,
-        lastReviewed: lastSessionPerTopic[t._id.toString()]
-      }))
+      .map(t => {
+        const sub = subjectMap[t.subjectId?.toString()] || {};
+        return {
+          id: t._id,
+          title: t.title,
+          lastReviewed: lastSessionPerTopic[t._id.toString()],
+          subjectTitle: sub.title,
+          subjectColor: sub.color
+        };
+      })
       .sort((a, b) => new Date(a.lastReviewed) - new Date(b.lastReviewed));
 
     // --- Metric 3: Material Readiness Gaps ---
@@ -62,14 +72,19 @@ export async function GET(request) {
         const missingMaterials = !t.generationStatus?.hasFlashcards || !t.generationStatus?.hasQuiz;
         return hasNotes && missingMaterials;
       })
-      .map(t => ({
-        id: t._id,
-        title: t.title,
-        missing: {
-          flashcards: !t.generationStatus?.hasFlashcards,
-          quiz: !t.generationStatus?.hasQuiz
-        }
-      }));
+      .map(t => {
+        const sub = subjectMap[t.subjectId?.toString()] || {};
+        return {
+          id: t._id,
+          title: t.title,
+          missing: {
+            flashcards: !t.generationStatus?.hasFlashcards,
+            quiz: !t.generationStatus?.hasQuiz
+          },
+          subjectTitle: sub.title,
+          subjectColor: sub.color
+        };
+      });
 
     // --- Metric 5: Subject Readiness Score ---
     // Rule: Average Quiz Score per Subject
