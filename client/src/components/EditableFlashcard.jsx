@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { toastConfirm } from '../utils/toastConfirm';
 const EditableFlashcard = ({ card, onSave, onDelete, themeColor }) => {
   const [question, setQuestion] = useState(card.question);
   const [answer, setAnswer] = useState(card.answer);
@@ -13,7 +13,8 @@ const EditableFlashcard = ({ card, onSave, onDelete, themeColor }) => {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this flashcard?")) return;
+    const isConfirmed = await toastConfirm("Are you sure you want to delete this flashcard?");
+    if (!isConfirmed) return;
     setIsDeleting(true);
     await onDelete(card._id);
     setIsDeleting(false);

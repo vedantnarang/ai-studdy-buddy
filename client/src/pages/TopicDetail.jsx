@@ -10,7 +10,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-
+import { toastConfirm } from '../utils/toastConfirm';
 const TopicDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -114,13 +114,15 @@ const TopicDetail = () => {
 
   const handleDocumentDelete = async (e, documentId) => {
     e.stopPropagation();
-    if (!window.confirm('Remove this document? This cannot be undone.')) return;
+    const isConfirmed = await toastConfirm('Remove this document? This cannot be undone.');
+    if (!isConfirmed) return;
     await deleteDocument(documentId);
   };
 
   const handleImageDelete = async (e, imageId) => {
     e.stopPropagation();
-    if (!window.confirm('Remove this image? This cannot be undone.')) return;
+    const isConfirmed = await toastConfirm('Remove this image? This cannot be undone.');
+    if (!isConfirmed) return;
     await deleteImage(imageId);
   };
 

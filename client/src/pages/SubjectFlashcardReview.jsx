@@ -4,7 +4,7 @@ import api from '../services/api';
 import FlashcardItem from '../components/FlashcardItem';
 import EditableFlashcard from '../components/EditableFlashcard';
 import toast from 'react-hot-toast';
-
+import { toastConfirm } from '../utils/toastConfirm';
 const SubjectFlashcardReview = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -107,7 +107,8 @@ const SubjectFlashcardReview = () => {
   };
 
   const handleRegenerateTopic = async (topicId) => {
-    if (!window.confirm("Replace these flashcards? This will permanently generate a new set from your latest topic notes.")) return;
+    const isConfirmed = await toastConfirm("Replace these flashcards? This will permanently generate a new set from your latest topic notes.");
+    if (!isConfirmed) return;
     
     setRegeneratingTopicId(topicId);
     try {

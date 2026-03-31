@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTopic } from '../hooks/useTopic';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-
+import { toastConfirm } from '../utils/toastConfirm';
 const QuizHistory = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -32,7 +32,8 @@ const QuizHistory = () => {
   }, [id]);
 
   const handleDeleteQuiz = async (quizId) => {
-    if (!window.confirm("Are you sure you want to delete this quiz and all its attempts?")) return;
+    const isConfirmed = await toastConfirm("Are you sure you want to delete this quiz and all its attempts?");
+    if (!isConfirmed) return;
     try {
       await api.delete(`/topics/${id}/quizzes/${quizId}`);
       setAttempts(prev => prev.filter(group => group.quizId !== quizId));

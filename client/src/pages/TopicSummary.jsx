@@ -13,7 +13,7 @@ import rehypeRaw from 'rehype-raw';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import { formatMathForMarkdown } from '../utils/formatMathForMarkdown';
-
+import { toastConfirm } from '../utils/toastConfirm';
 const TopicSummary = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -100,7 +100,8 @@ const TopicSummary = () => {
   };
 
   const handleRegenerate = async () => {
-    if (!window.confirm('Are you sure you want to regenerate the summary? This will completely overwrite the existing AI summary.')) return;
+    const isConfirmed = await toastConfirm('Are you sure you want to regenerate the summary? This will completely overwrite the existing AI summary.');
+    if (!isConfirmed) return;
     
     setIsRegenerating(true);
     try {
