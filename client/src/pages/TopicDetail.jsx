@@ -331,7 +331,17 @@ const TopicDetail = () => {
               </div>
             ) : null}
             
-            <DocumentUpload onUpload={handleUpload} uploading={uploading} />
+            <DocumentUpload 
+              onUpload={handleUpload} 
+              uploading={uploading} 
+              existingFiles={[
+                ...sourceDocuments.map(d => ({ fileName: d.fileName, fileSize: d.fileSize || 0 })),
+                ...sourceImages.map(img => ({ 
+                  fileName: img.fileName || (img.url ? decodeURIComponent(img.url.split('/').pop()) : 'Image'), 
+                  fileSize: img.fileSize || 0 
+                }))
+              ]}
+            />
           </div>
 
         </article>

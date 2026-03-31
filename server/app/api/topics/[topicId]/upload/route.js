@@ -120,6 +120,7 @@ export async function POST(request, { params }) {
             url: cloudinaryResult.url,
             publicId: cloudinaryResult.publicId,
             extractedText: extractedText || '',
+            fileSize: file.size,
           });
 
           results.push({
@@ -148,6 +149,7 @@ export async function POST(request, { params }) {
         fileType,
         extractedText,
         extractionMethod,
+        fileSize: file.size,
       });
 
       results.push({ 
@@ -156,6 +158,19 @@ export async function POST(request, { params }) {
         extractionMethod,
         extractedPreview: extractedText.substring(0, 100) + (extractedText.length > 100 ? "..." : "")
       });
+    }
+
+    // Overwrite Logic: Remove existing files that share a typical filename with incoming ones
+    const incomingNames = files.map(f => f.name);
+    
+    // Removing existing documents if their filename matches an incoming file
+    if (newDocuments.length > 0) {
+      topic.sourceDocuments = topic.sourceDocuments.filter(doc => !incomingNames.includes(doc.fileName));
+    }
+    // Removing existing images if their filename matches an incoming file
+    // Note: older images might not have fileName saved, so we fall back gracefully.
+    if (newImages.length > 0) {
+      topic.sourceImages = topic.sourceImages.filter(img => !incomingNames.includes(img.fileName));
     }
 
     // Save changes to database

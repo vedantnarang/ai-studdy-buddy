@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import FilePreviewModal from './FilePreviewModal';
+import { toastConfirm } from '../utils/toastConfirm';
 
-const DocumentUpload = ({ onUpload, uploading: externalUploading }) => {
+const DocumentUpload = ({ onUpload, uploading: externalUploading, existingFiles = [] }) => {
   const [dragActive, setDragActive] = useState(false);
   const [files, setFiles] = useState([]);
   const [error, setError] = useState('');
@@ -61,15 +62,17 @@ const DocumentUpload = ({ onUpload, uploading: externalUploading }) => {
         setError(`"${file.name}" is too large. Max size is 5MB.`);
         continue;
       }
-      // Prevent duplicate file names
-      const alreadyAdded = files.some(f => f.name === file.name && f.size === file.size);
-      if (!alreadyAdded) {
-        // Add preview URL for images and PDFs
-        if (isImageType(file.type) || file.type === 'application/pdf') {
-          file.preview = URL.createObjectURL(file);
-        }
-        validFiles.push(file);
+
+      // Prevent duplicate file names within the current upload queue
+      const alreadyInQueue = files.some(f => f.name === file.name && f.size === file.size) || 
+                             validFiles.some(f => f.name === file.name && f.size === file.size);
+      if (alreadyInQueue) continue;
+
+      // Add preview URL for images and PDFs
+      if (isImageType(file.type) || file.type === 'application/pdf') {
+        file.preview = URL.createObjectURL(file);
       }
+      validFiles.push(file);
     }
 
     if (validFiles.length > 0) {
@@ -88,7 +91,49 @@ const DocumentUpload = ({ onUpload, uploading: externalUploading }) => {
 
   const handleUpload = async () => {
     if (files.length === 0 || !onUpload) return;
-    const result = await onUpload(files);
+    
+    const finalFilesToUpload = [];
+
+    for (const file of files) {
+      let processedFile = file;
+
+      if (existingFiles && existingFiles.length > 0) {
+        const match = existingFiles.find(f => f.fileName === file.name);
+        if (match) {
+          // Same name AND same size -> Prompt for Overwrite
+          if (match.fileSize === file.size && match.fileSize > 0) {
+            const confirm = await toastConfirm(`Are you sure you want to upload this? It will overwrite the current file: ${file.name}`);
+            if (!confirm) {
+              continue; // User cancelled this specific file
+            }
+          } else {
+            // Same name BUT different size -> Auto-rename before sending to API
+            let newName = processedFile.name;
+            let counter = 1;
+            const dotIndex = newName.lastIndexOf('.');
+            const baseName = dotIndex !== -1 ? newName.substring(0, dotIndex) : newName;
+            const extension = dotIndex !== -1 ? newName.substring(dotIndex) : '';
+
+            // Ensure unique name against EXISTING files and ALREADY PROCESSED finalFiles
+            while (
+              existingFiles.some(f => f.fileName === newName) || 
+              finalFilesToUpload.some(f => f.name === newName)
+            ) {
+              newName = `${baseName}(${counter})${extension}`;
+              counter++;
+            }
+            
+            // Reconstruct the file with the new name
+            processedFile = new File([file], newName, { type: file.type });
+          }
+        }
+      }
+      finalFilesToUpload.push(processedFile);
+    }
+
+    if (finalFilesToUpload.length === 0) return; // Stop if user cancelled all overlapping files
+
+    const result = await onUpload(finalFilesToUpload);
     if (result?.success) {
       // Clean up previews before clearing
       files.forEach(file => {

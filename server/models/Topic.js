@@ -21,6 +21,10 @@ const sourceImageSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  fileSize: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const sourceDocumentSchema = new mongoose.Schema({
@@ -45,6 +49,10 @@ const sourceDocumentSchema = new mongoose.Schema({
   uploadedAt: {
     type: Date,
     default: Date.now,
+  },
+  fileSize: {
+    type: Number,
+    default: 0,
   },
 });
 
