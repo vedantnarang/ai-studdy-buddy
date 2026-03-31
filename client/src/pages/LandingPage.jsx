@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import DarkModeToggle from '../components/DarkModeToggle';
+import heroImage from '../assets/hero_image.png';
 import './LandingPage.css';
 
 const LandingPage = () => {
@@ -24,22 +25,27 @@ const LandingPage = () => {
 
       {/* ========== HERO ========== */}
       <section className="hero-section">
-        <div className="hero-badge">
-          <span className="dot"></span>
-          AI-Powered Learning
+        <div className="hero-content">
+          <div className="hero-badge">
+            <span className="dot"></span>
+            AI-Powered Learning
+          </div>
+          <h1 className="hero-title">
+            Your Academic<br />
+            <span className="gradient-text">Companion</span>
+          </h1>
+          <p className="hero-subtitle">
+            Transform your study sessions with AI-generated flashcards, quizzes, and summaries. 
+            Master any subject faster with personalized learning tools built for high achievers.
+          </p>
+          <div className="hero-actions">
+            <Link to="/register" className="btn-primary hover:shadow-lg hover:shadow-blue-800" id="hero-cta-get-started">
+              Start Studying Free →
+            </Link>
+          </div>
         </div>
-        <h1 className="hero-title">
-          Your Academic<br />
-          <span className="gradient-text">Companion</span>
-        </h1>
-        <p className="hero-subtitle">
-          Transform your study sessions with AI-generated flashcards, quizzes, and summaries. 
-          Master any subject faster with personalized learning tools built for high achievers.
-        </p>
-        <div className="hero-actions">
-          <Link to="/register" className="btn-primary hover:shadow-lg hover:shadow-blue-800" id="hero-cta-get-started">
-            Start Studying Free →
-          </Link>
+        <div className="hero-image-container">
+          <img src={heroImage} alt="Study Buddy Dashboard" className="hero-image" />
         </div>
       </section>
 

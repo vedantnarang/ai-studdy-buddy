@@ -1,14 +1,17 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAnalytics } from '../hooks/useAnalytics';
+import { useSubjects } from '../hooks/useSubjects';
 import { useState } from 'react';
 import DarkModeToggle from './DarkModeToggle';
 
 const AppLayout = () => {
   const { user, logout } = useAuth();
   const { streak } = useAnalytics();
+  const { subjects = [] } = useSubjects();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSubjectsDropdownOpen, setIsSubjectsDropdownOpen] = useState(location.pathname.startsWith('/subject'));
 
   return (
     <div className="bg-surface dark:bg-gray-900 font-body text-on-surface dark:text-gray-100 antialiased min-h-screen">
@@ -42,16 +45,70 @@ const AppLayout = () => {
             to="/dashboard"
             onClick={() => setIsSidebarOpen(false)}
             className={`flex items-center space-x-3 rounded-r-full ml-[-8px] pl-6 py-3 font-semibold transition-transform active:scale-95 ${
-              location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/subject')
+              location.pathname === '/dashboard' || location.pathname === '/'
                 ? 'bg-blue-100/50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
             }`}
           >
-            <span className={`material-symbols-outlined ${location.pathname.startsWith('/dashboard') ? 'filled-icon' : ''}`}>
+            <span className={`material-symbols-outlined ${location.pathname === '/dashboard' || location.pathname === '/' ? 'filled-icon' : ''}`}>
               dashboard
             </span>
             <span>Dashboard</span>
           </Link>
+
+          {/* Subjects Dropdown */}
+          {subjects && subjects.length > 0 && (
+            <div className="mt-2">
+              <button
+                onClick={() => setIsSubjectsDropdownOpen(!isSubjectsDropdownOpen)}
+                className={`w-full flex items-center justify-between space-x-3 rounded-r-full ml-[-8px] pr-4 pl-6 py-3 font-semibold transition-transform active:scale-95 ${
+                  location.pathname.startsWith('/subject') && !isSubjectsDropdownOpen
+                    ? 'bg-blue-100/50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <span className={`material-symbols-outlined ${location.pathname.startsWith('/subject') ? 'filled-icon' : ''}`}>
+                    library_books
+                  </span>
+                  <span>Subjects</span>
+                </div>
+                <span className={`material-symbols-outlined transition-transform duration-200 ${isSubjectsDropdownOpen ? 'rotate-180' : ''}`}>
+                  expand_more
+                </span>
+              </button>
+              
+              {/* Dropdown Items */}
+              <div
+                className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                  isSubjectsDropdownOpen ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0'
+                }`}
+              >
+                <div className="flex flex-col space-y-1 ml-4 pl-8 border-l-2 border-slate-200 dark:border-slate-800 pb-2">
+                  {subjects.map(subject => (
+                    <Link
+                      key={subject._id}
+                      to={`/subject/${subject._id}`}
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={`block py-2 pr-4 pl-2 rounded-r-full text-sm font-medium transition-colors ${
+                        location.pathname === `/subject/${subject._id}`
+                          ? 'text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/20 my-0.5 border-l-2 border-blue-500 ml-[-2px]'
+                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 my-0.5'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2 truncate">
+                        <div 
+                          className="w-2 h-2 rounded-full shrink-0" 
+                          style={{ backgroundColor: subject.color || '#0053db' }}
+                        />
+                        <span className="truncate">{subject.title}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </nav>
 
         <div className="mt-auto border-t border-surface-container-high dark:border-gray-700 pt-4">
