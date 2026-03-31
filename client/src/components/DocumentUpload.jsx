@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
+import FilePreviewModal from './FilePreviewModal';
 
 const DocumentUpload = ({ onUpload, uploading: externalUploading }) => {
   const [dragActive, setDragActive] = useState(false);
   const [files, setFiles] = useState([]);
   const [error, setError] = useState('');
+  const [previewFile, setPreviewFile] = useState(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -62,8 +64,8 @@ const DocumentUpload = ({ onUpload, uploading: externalUploading }) => {
       // Prevent duplicate file names
       const alreadyAdded = files.some(f => f.name === file.name && f.size === file.size);
       if (!alreadyAdded) {
-        // Add preview URL for images
-        if (isImageType(file.type)) {
+        // Add preview URL for images and PDFs
+        if (isImageType(file.type) || file.type === 'application/pdf') {
           file.preview = URL.createObjectURL(file);
         }
         validFiles.push(file);
@@ -135,8 +137,8 @@ const DocumentUpload = ({ onUpload, uploading: externalUploading }) => {
         <div className="mt-4 space-y-2">
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{files.length} file(s) selected</p>
           {files.map((file, index) => (
-            <div key={`${file.name}-${index}`} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-              <div className="flex items-center gap-3 overflow-hidden">
+            <div key={`${file.name}-${index}`} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden">
+              <div className="flex-1 min-w-0 flex items-center gap-3 pr-4">
                 {isImageType(file.type) && file.preview ? (
                   <img 
                     src={file.preview} 
@@ -155,13 +157,25 @@ const DocumentUpload = ({ onUpload, uploading: externalUploading }) => {
                   </p>
                 </div>
               </div>
-              <button 
-                onClick={(e) => { e.stopPropagation(); removeFile(index); }}
-                disabled={uploading}
-                className="text-gray-400 hover:text-red-500 p-1.5 disabled:opacity-50 transition-colors shrink-0"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                {file.preview && (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setPreviewFile(file); }}
+                    className="text-gray-400 hover:text-blue-500 p-1.5 transition-colors shrink-0 outline-none"
+                    title="Preview file"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                  </button>
+                )}
+                <button 
+                  onClick={(e) => { e.stopPropagation(); removeFile(index); }}
+                  disabled={uploading}
+                  className="text-gray-400 hover:text-red-500 p-1.5 disabled:opacity-50 transition-colors shrink-0 outline-none"
+                  title="Remove file"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
             </div>
           ))}
           
@@ -188,6 +202,11 @@ const DocumentUpload = ({ onUpload, uploading: externalUploading }) => {
       {error && (
         <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>
       )}
+
+      <FilePreviewModal 
+        file={previewFile}
+        onClose={() => setPreviewFile(null)}
+      />
     </div>
   );
 };

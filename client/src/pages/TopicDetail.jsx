@@ -4,6 +4,7 @@ import { useTopic } from '../hooks/useTopic';
 import { useDebounce } from '../hooks/useDebounce';
 import DocumentUpload from '../components/DocumentUpload';
 import DocumentModal from '../components/DocumentModal';
+import FilePreviewModal from '../components/FilePreviewModal';
 import ExtractionFailureModal from '../components/ExtractionFailureModal';
 import AIPanel from '../components/AIPanel';
 import ReactMarkdown from 'react-markdown';
@@ -26,6 +27,7 @@ const TopicDetail = () => {
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [savingDoc, setSavingDoc] = useState(false);
   const [failedExtractions, setFailedExtractions] = useState([]);
+  const [previewFile, setPreviewFile] = useState(null);
 
   // Initialize local notes state
   useEffect(() => {
@@ -220,68 +222,110 @@ const TopicDetail = () => {
             {(sourceDocuments.length > 0 || sourceImages.length > 0) ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 {/* Uploaded Images */}
-                {sourceImages.map((img, index) => (
-                  <div
-                    key={img._id || `img-${index}`}
-                    onClick={() => setSelectedDoc({ _id: img._id, fileName: img.fileName || (img.url ? decodeURIComponent(img.url.split('/').pop()) : 'Image'), fileType: 'image', extractedText: img.extractedText, imageUrl: img.url })}
-                    className="group relative flex items-start gap-4 p-5 bg-surface-container-low dark:bg-gray-700/50 rounded-2xl border border-transparent cursor-pointer hover:border-primary/30 hover:bg-surface-container-lowest hover:shadow-sm dark:hover:bg-gray-700 transition-all border-dashed"
-                  >
-                    <img 
-                      src={img.url} 
-                      alt="Uploaded"
-                      className="w-12 h-12 rounded-xl object-cover shrink-0 border border-gray-200 dark:border-gray-600"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-on-surface dark:text-white truncate">{img.fileName || (img.url ? decodeURIComponent(img.url.split('/').pop()) : 'Image')}</p>
-                      <p className="text-xs text-on-surface-variant mt-1 mb-1 flex items-center gap-2">
-                        <span className="font-mono uppercase">image</span>
-                      </p>
-                      {!img.extractedText && (
-                        <p className="text-xs text-error flex items-center gap-1 font-medium bg-error-container/20 w-fit px-2 py-0.5 rounded-md">
-                          <span className="material-symbols-outlined text-[12px]">error</span>
-                          No text - Generative AI will ignore this image
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      onClick={(e) => handleImageDelete(e, img.publicId || img._id)}
-                      className="opacity-0 group-hover:opacity-100 absolute top-3 right-3 p-2 text-outline-variant hover:text-error rounded-full hover:bg-error-container/50 transition-all"
+                {sourceImages.map((img, index) => {
+                  const fileName = img.fileName || (img.url ? decodeURIComponent(img.url.split('/').pop()) : 'Image');
+                  return (
+                    <div
+                      key={img._id || `img-${index}`}
+                      onClick={() => setSelectedDoc({ _id: img._id, fileName, fileType: 'image', extractedText: img.extractedText, imageUrl: img.url })}
+                      className="group relative flex items-center justify-between p-5 bg-surface-container-low dark:bg-gray-700/50 rounded-2xl border border-transparent cursor-pointer hover:border-primary/30 hover:bg-surface-container-lowest hover:shadow-sm dark:hover:bg-gray-700 transition-all border-dashed overflow-hidden"
                     >
-                      <span className="material-symbols-outlined text-lg">delete</span>
-                    </button>
-                  </div>
-                ))}
+                      <div className="flex-1 min-w-0 flex items-start gap-4 pr-4">
+                        <img 
+                          src={img.url} 
+                          alt="Uploaded"
+                          className="w-12 h-12 rounded-xl object-cover shrink-0 border border-gray-200 dark:border-gray-600"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-on-surface dark:text-white truncate">{fileName}</p>
+                          <p className="text-xs text-on-surface-variant mt-1 mb-1 flex items-center gap-2">
+                            <span className="font-mono uppercase">image</span>
+                          </p>
+                          {!img.extractedText && (
+                            <p className="text-xs text-error flex items-center gap-1 font-medium bg-error-container/20 w-fit px-2 py-0.5 rounded-md">
+                              <span className="material-symbols-outlined text-[12px]">error</span>
+                              No text extracted
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPreviewFile({
+                              name: fileName,
+                              preview: img.url,
+                              type: 'image/jpeg' // Fallback image type
+                            });
+                          }}
+                          className="p-2 text-outline-variant hover:text-primary rounded-full hover:bg-primary/10 transition-all"
+                          title="Preview image"
+                        >
+                          <span className="material-symbols-outlined text-lg">visibility</span>
+                        </button>
+                        <button
+                          onClick={(e) => handleImageDelete(e, img.publicId || img._id)}
+                          className="p-2 text-outline-variant hover:text-error rounded-full hover:bg-error-container/50 transition-all"
+                          title="Delete image"
+                        >
+                          <span className="material-symbols-outlined text-lg">delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
 
                 {/* Uploaded Documents */}
                 {sourceDocuments.map((doc) => (
                   <div
                     key={doc._id}
                     onClick={() => setSelectedDoc(doc)}
-                    className="group relative flex items-start gap-4 p-5 bg-surface-container-low dark:bg-gray-700/50 rounded-2xl border border-transparent cursor-pointer hover:border-primary/30 hover:bg-surface-container-lowest hover:shadow-sm dark:hover:bg-gray-700 transition-all border-dashed"
+                    className="group relative flex items-center justify-between p-5 bg-surface-container-low dark:bg-gray-700/50 rounded-2xl border border-transparent cursor-pointer hover:border-primary/100 hover:border-solid hover:border-2 hover:bg-surface-container-lowest hover:shadow-sm dark:hover:bg-gray-700 transition-all border-dashed overflow-hidden"
                   >
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                      doc.fileType === 'pdf' 
-                        ? 'bg-error-container text-error' 
-                        : 'bg-green-100 text-green-600'
-                    }`}>
-                      <span className="material-symbols-outlined font-bold text-xl">description</span>
+                    <div className="flex-1 min-w-0 flex items-start gap-4 pr-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                        doc.fileType === 'pdf' 
+                          ? 'bg-error-container text-error' 
+                          : 'bg-green-100 text-green-600'
+                      }`}>
+                        <span className="material-symbols-outlined font-bold text-xl">description</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-on-surface dark:text-white truncate">{doc.fileName}</p>
+                        <p className="text-xs text-on-surface-variant mt-1 flex items-center gap-2">
+                          <span className="font-mono uppercase">{doc.fileType}</span>
+                          {doc.extractionMethod === 'ocr' && (
+                            <span className="px-1.5 py-0.5 text-[9px] font-black bg-amber-100 text-amber-800 rounded uppercase tracking-widest">OCR</span>
+                          )}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-on-surface dark:text-white truncate">{doc.fileName}</p>
-                      <p className="text-xs text-on-surface-variant mt-1 flex items-center gap-2">
-                        <span className="font-mono uppercase">{doc.fileType}</span>
-                        {doc.extractionMethod === 'ocr' && (
-                          <span className="px-1.5 py-0.5 text-[9px] font-black bg-amber-100 text-amber-800 rounded uppercase tracking-widest">OCR</span>
-                        )}
-                      </p>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {doc.fileType === 'pdf' && doc.url && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPreviewFile({
+                              name: doc.fileName,
+                              preview: doc.url,
+                              type: 'application/pdf'
+                            });
+                          }}
+                          className="p-2 text-outline-variant hover:text-primary rounded-full hover:bg-primary/10 transition-all"
+                          title="Preview PDF"
+                        >
+                          <span className="material-symbols-outlined text-lg">visibility</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={(e) => handleDocumentDelete(e, doc._id)}
+                        className="p-2 text-outline-variant hover:text-error rounded-full hover:bg-error-container/50 transition-all"
+                        title="Remove document"
+                      >
+                        <span className="material-symbols-outlined text-lg">delete</span>
+                      </button>
                     </div>
-                    <button
-                      onClick={(e) => handleDocumentDelete(e, doc._id)}
-                      className="opacity-0 group-hover:opacity-100 absolute top-3 right-3 p-2 text-outline-variant hover:text-error rounded-full hover:bg-error-container/50 transition-all"
-                      title="Remove document"
-                    >
-                      <span className="material-symbols-outlined text-lg">delete</span>
-                    </button>
                   </div>
                 ))}
               </div>
@@ -404,6 +448,12 @@ const TopicDetail = () => {
           }}
         />
       )}
+
+      {/* File Preview Modal */}
+      <FilePreviewModal 
+        file={previewFile}
+        onClose={() => setPreviewFile(null)}
+      />
     </div>
   );
 };
