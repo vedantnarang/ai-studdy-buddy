@@ -44,7 +44,16 @@ const Login = () => {
   };
 
   return (
-    <div className="flex flex-col justify-center items-center min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900 px-4">
+    <div className="relative flex flex-col justify-center items-center min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900 px-4">
+      {/* Back to Home Button */}
+      <Link 
+        to="/" 
+        className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 text-sm font-bold transition-all hover:-translate-x-1 group"
+      >
+        <span className="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110 text-primary">arrow_back</span>
+        <span className="bg-clip-text text-transparent bg-linear-to-r from-blue-600 via-purple-500 to-pink-500 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400">Back to Home</span>
+      </Link>
+
       {/* Brand Header */}
       <div className="flex items-center space-x-3 mb-8">
         <div className="p-3 bg-linear-to-br from-blue-600 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/30">

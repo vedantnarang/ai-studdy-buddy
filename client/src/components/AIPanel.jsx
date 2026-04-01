@@ -12,6 +12,16 @@ const AIPanel = ({ topic, onGenerated }) => {
   if (!topic) return null;
 
   const handleGenerate = async (type) => {
+    // Check if topic has any study material
+    const hasNotes = topic.notes && topic.notes.trim().length > 0;
+    const hasDocuments = topic.sourceDocuments && topic.sourceDocuments.length > 0;
+    const hasImages = topic.sourceImages && topic.sourceImages.length > 0;
+
+    if (!hasNotes && !hasDocuments && !hasImages) {
+      toast.error('Please add some notes, documents, or images first to generate AI content.');
+      return;
+    }
+
     // Check if data already exists to warn user
     let hasData = false;
     if (type === 'flashcards' && topic.generationStatus?.hasFlashcards) hasData = true;

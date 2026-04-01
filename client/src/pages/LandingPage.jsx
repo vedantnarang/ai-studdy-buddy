@@ -31,7 +31,7 @@ const LandingPage = () => {
             AI-Powered Learning
           </div>
           <h1 className="hero-title">
-            Your Academic<br />
+            Your Academic <br />
             <span className="gradient-text">Companion</span>
           </h1>
           <p className="hero-subtitle">

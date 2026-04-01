@@ -36,8 +36,15 @@ export const useSubjects = () => {
       toast.success('Subject created successfully!');
       return { success: true, data: newSubject };
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message || 'Failed to create subject');
-      return { success: false, error: err.response?.data?.message || err.message };
+      const isDuplicate = err.response?.status === 409;
+      if (!isDuplicate) {
+        toast.error(err.response?.data?.message || err.message || 'Failed to create subject');
+      }
+      return { 
+        success: false, 
+        error: err.response?.data?.message || err.message,
+        status: err.response?.status 
+      };
     }
   };
 

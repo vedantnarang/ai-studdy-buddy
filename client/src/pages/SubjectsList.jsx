@@ -46,14 +46,24 @@ const SubjectsList = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [subjectToDelete, setSubjectToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
 
   const handleCreate = async (e) => {
     e.preventDefault();
     setCreateError("");
     
     // Manual validation
+    let errors = {};
     if (!newTitle.trim()) {
-      setFieldErrors({ title: "Subject title is required" });
+      errors.title = "Subject title is required";
+    }
+    const wordCount = newDescription.trim() ? newDescription.trim().split(/\s+/).filter(word => word.length > 0).length : 0;
+    if (wordCount > 20) {
+      errors.description = "Description cannot exceed 20 words";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
     
@@ -70,7 +80,11 @@ const SubjectsList = () => {
       setFieldErrors({});
       refreshAnalytics();
     } else {
-      setCreateError(result.error);
+      if (result.status === 409) {
+        setDuplicateModalOpen(true);
+      } else {
+        setCreateError(result.error);
+      }
     }
     setCreateLoading(false);
   };
@@ -250,16 +264,33 @@ const SubjectsList = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-on-surface-variant mb-2">
-                  Description (Optional)
-                </label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-semibold text-on-surface-variant">
+                    Description (Optional)
+                  </label>
+                  <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                    (newDescription.trim() ? newDescription.trim().split(/\s+/).filter(w => w.length > 0).length : 0) > 20 
+                      ? 'text-red-500' 
+                      : 'text-tertiary'
+                  }`}>
+                    {newDescription.trim() ? newDescription.trim().split(/\s+/).filter(w => w.length > 0).length : 0} / 20 words
+                  </span>
+                </div>
                 <input
                   type="text"
                   value={newDescription}
-                  onChange={(e) => setNewDescription(e.target.value)}
+                  onChange={(e) => {
+                    setNewDescription(e.target.value);
+                    if (fieldErrors.description) setFieldErrors(prev => ({ ...prev, description: null }));
+                  }}
                   placeholder="e.g. Cellular structures, DNA replication, and gene expression."
-                  className="w-full px-4 py-3 bg-surface-container-low border-none rounded-xl text-on-surface focus:ring-2 focus:ring-primary/40 outline-none transition-all"
+                  className={`w-full px-4 py-3 pt-2 bg-surface-container-low border-2 rounded-xl text-on-surface focus:ring-2 focus:border-transparent outline-none transition-all ${
+                    fieldErrors.description 
+                      ? 'border-red-500 focus:ring-red-500/40' 
+                      : 'border-transparent focus:ring-primary/40'
+                  }`}
                 />
+                {fieldErrors.description && <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.description}</p>}
               </div>
 
               <div className="flex gap-3 justify-end mt-8 pt-4 border-t border-gray-100 dark:border-gray-700">
@@ -352,7 +383,7 @@ const SubjectsList = () => {
                     {subject.title || "Untitled"}
                   </h4>
 
-                  <p className="text-sm text-on-surface-variant mb-8 line-clamp-2">
+                  <p className="text-sm text-on-surface-variant mb-8 line-clamp-2 pb-1">
                     {subject.description || "No description provided."}
                   </p>
 
@@ -429,14 +460,15 @@ const SubjectsList = () => {
                   {activeMetricTab === "weakness" && (
                     <div className="animate-in fade-in duration-500">
                       {weakTopics.length > 0 ? (
-                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {weakTopics.map((topic) => {
                             const accentColor = topic.subjectColor || "#0053db";
                             const shadowColor = `${accentColor}40`;
                             return (
-                            <li
+                            <Link
+                              to={`/topic/${topic.id}`}
                               key={topic.id}
-                              className="flex flex-col gap-2 p-4 rounded-xl bg-surface-container-low border-2 transition-all duration-300 hover:-translate-y-1"
+                              className="flex flex-col gap-2 p-4 rounded-xl bg-surface-container-low border-2 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
                               style={{ borderColor: accentColor }}
                               onMouseEnter={(e) => e.currentTarget.style.boxShadow = `0 8px 24px -4px ${shadowColor}`}
                               onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
@@ -462,10 +494,10 @@ const SubjectsList = () => {
                                   }}
                                 ></div>
                               </div>
-                            </li>
+                            </Link>
                             );
                           })}
-                        </ul>
+                        </div>
                       ) : (
                         <EmptyMetricState
                           icon="done_all"
@@ -479,14 +511,15 @@ const SubjectsList = () => {
                   {activeMetricTab === "retention" && (
                     <div className="animate-in fade-in duration-500">
                       {forgottenTopics.length > 0 ? (
-                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {forgottenTopics.map((topic) => {
                             const accentColor = topic.subjectColor || "#fbbf24";
                             const shadowColor = `${accentColor}40`;
                             return (
-                            <li
+                            <Link
+                              to={`/topic/${topic.id}`}
                               key={topic.id}
-                              className="flex items-center justify-between p-4 rounded-xl bg-surface-container-low border-2 transition-all duration-300 hover:-translate-y-1"
+                              className="flex items-center justify-between p-4 rounded-xl bg-surface-container-low border-2 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
                               style={{ borderColor: accentColor }}
                               onMouseEnter={(e) => e.currentTarget.style.boxShadow = `0 8px 24px -4px ${shadowColor}`}
                               onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
@@ -512,16 +545,15 @@ const SubjectsList = () => {
                                   </p>
                                 </div>
                               </div>
-                              <Link
-                                to={`/topic/${topic.id}`}
+                              <div
                                 className="px-3 py-1.5 bg-amber-500 text-white text-[10px] font-black uppercase rounded-lg hover:bg-amber-600 transition-colors"
                               >
                                 Review
-                              </Link>
-                            </li>
+                              </div>
+                            </Link>
                             );
                           })}
-                        </ul>
+                        </div>
                       ) : (
                         <EmptyMetricState
                           icon="auto_awesome"
@@ -535,14 +567,15 @@ const SubjectsList = () => {
                   {activeMetricTab === "gaps" && (
                     <div className="animate-in fade-in duration-500">
                       {materialGaps.length > 0 ? (
-                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {materialGaps.map((topic) => {
                             const accentColor = topic.subjectColor || "#3b82f6";
                             const shadowColor = `${accentColor}40`;
                             return (
-                            <li
+                            <Link
+                              to={`/topic/${topic.id}`}
                               key={topic.id}
-                              className="p-4 rounded-xl bg-surface-container-low border-2 transition-all duration-300 hover:-translate-y-1"
+                              className="flex flex-col justify-center p-4 rounded-xl bg-surface-container-low border-2 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
                               style={{ borderColor: accentColor }}
                               onMouseEnter={(e) => e.currentTarget.style.boxShadow = `0 8px 24px -4px ${shadowColor}`}
                               onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
@@ -567,10 +600,10 @@ const SubjectsList = () => {
                                   </span>
                                 )}
                               </div>
-                            </li>
+                            </Link>
                             );
                           })}
-                        </ul>
+                        </div>
                       ) : (
                         <EmptyMetricState
                           icon="library_add_check"
@@ -642,6 +675,31 @@ const SubjectsList = () => {
         title="Delete Subject?"
         message="Are you sure you want to delete this subject? This cannot be undone."
       />
+
+      {/* Duplicate Subject Modal */}
+      {duplicateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 transition-opacity">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 w-full max-w-md overflow-hidden animate-in zoom-in-95 fade-in duration-200">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4">
+                <span className="material-symbols-outlined text-2xl">warning</span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Subject Already Exists</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+                You already have a subject with this name. Please choose a different name or navigate to the existing subject.
+              </p>
+            </div>
+            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-700 flex justify-end transition-colors">
+              <button 
+                onClick={() => setDuplicateModalOpen(false)} 
+                className="px-4 py-2 bg-primary hover:bg-primary-dim text-white font-medium rounded-lg shadow-sm transition-colors"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

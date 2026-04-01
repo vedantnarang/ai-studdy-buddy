@@ -101,10 +101,11 @@
   max-width: 100%;
   height: auto;
   border-radius: 20px;
-  box-shadow: 0 35px 100px rgba(0, 83, 219, 0.15);
+  box-shadow: 0 25px 80px rgba(0, 83, 219, 0.12);
   transform: translateY(0);
   animation: float 6s ease-in-out infinite;
-  padding:10px;
+  padding: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
 }
 @keyframes float {
   0% { transform: translateY(0px); }
@@ -146,6 +147,9 @@
   letter-spacing: -1.5px;
   max-width: 700px;
 }
+.hero-title br {
+  display: block;
+}
 .gradient-text {
   background: linear-gradient(135deg, #0053db 0%, #605c78 100%);
   -webkit-background-clip: text;
@@ -164,7 +168,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 64px;
+  margin-bottom: 32px;
 }
 .btn-primary {
   display: inline-flex;
@@ -520,9 +524,20 @@
   }
   .hero-content {
     max-width: 100%;
-    margin-bottom: 40px;
+    margin-bottom: 32px;
+    align-items: center;
+    text-align: center;
   }
   .hero-image-container {
+    justify-content: center;
+    padding-left: 0;
+    width: 100%;
+  }
+  .hero-subtitle {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .hero-actions {
     justify-content: center;
   }
   .hero-title {
@@ -582,8 +597,24 @@
     grid-template-columns: 1fr;
   }
   .stats-row {
-    flex-direction: column;
-    gap: 20px;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 24px;
+    padding-bottom: 40px;
+  }
+  .stat-item .stat-value {
+    font-size: 1.5rem;
+  }
+  .stat-item .stat-label {
+    font-size: 0.7rem;
+  }
+  .hero-title br {
+    display: none;
+  }
+  .hero-title {
+    font-size: 2.25rem;
+    margin-bottom: 12px;
   }
 }
 /* Dark mode specific overrides for landing page elements */
