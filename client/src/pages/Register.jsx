@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -37,6 +38,7 @@ const Register = () => {
 
     const result = await register(name, email, password);
     if (!result.success) {
+      toast.error(result.error || 'Failed to register');
       setError(result.error || 'Failed to register');
       setLoading(false);
     }

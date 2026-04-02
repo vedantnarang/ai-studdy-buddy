@@ -2,17 +2,20 @@ import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 import jwt from "jsonwebtoken";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
+import { z } from "zod";
+import { validateBody } from "@/lib/validate";
+
+const registerSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  password: z.string().min(1)
+}).strict();
 
 export async function POST(request) {
   try {
     await connectDB();
 
-    const body = await request.json();
-    const { name, email, password } = body;
-
-    if (!name || !email || !password) {
-      return errorResponse("Please provide name, email, and password.", "VALIDATION_ERROR", 400);
-    }
+    const { name, email, password } = validateBody(registerSchema, await request.json());
 
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
