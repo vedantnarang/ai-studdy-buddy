@@ -2,9 +2,8 @@ import jwt from "jsonwebtoken";
 
 export async function getAuthUser(request) {
   try {
-    const authHeader = request.headers.get('Authorization') || request.headers.get('authorization');
-    const token = authHeader?.split(' ')[1];
-    
+    const token = request.cookies.get("token")?.value;
+
     if (!token) return null;
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);

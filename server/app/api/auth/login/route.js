@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { cookies } from "next/headers";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
 import { z } from "zod";
 import { validateBody } from "@/lib/validate";
@@ -27,7 +28,6 @@ export async function POST(request) {
       return errorResponse("Invalid credentials.", "UNAUTHORIZED", 401);
     }
 
-
     const secret = process.env.JWT_SECRET_KEY;
     if (!secret) {
       throw new Error("JWT_SECRET_KEY is missing from environment variables.");
@@ -36,13 +36,20 @@ export async function POST(request) {
     const token = jwt.sign(
       { userId: user._id, email: user.email },
       secret,
-      { expiresIn: "7d" } 
+      { expiresIn: "7d" }
     );
 
+    const cookieStore = await cookies();
+    cookieStore.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 60 * 60 * 24 * 7, // 7 days in seconds
+      path: "/",
+    });
 
-    return successResponse({ 
-      message: "Login successful!", 
-      token,
+    return successResponse({
+      message: "Login successful!",
       user: {
         id: user._id,
         name: user.name,

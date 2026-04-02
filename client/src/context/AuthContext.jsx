@@ -38,18 +38,12 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkUser = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        dispatch({ type: 'LOGOUT' });
-        return;
-      }
-
       try {
         const response = await api.get('/auth/me');
         const userData = response.data.user || response.data.data?.user || response.data;
         dispatch({ type: 'SET_USER', payload: userData });
       } catch (error) {
-        localStorage.removeItem('token');
+        // Cookie is invalid or expired — server will reject the request
         dispatch({ type: 'LOGOUT' });
       }
     };
@@ -60,20 +54,18 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      
-      const token = response.data.token || response.data.data?.token;
+
       const user = response.data.user || response.data.data?.user;
 
-      localStorage.setItem('token', token);
       dispatch({ type: 'LOGIN', payload: user });
       navigate('/dashboard');
       return { success: true };
     } catch (error) {
       const respData = error.response?.data;
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: respData?.error?.message || respData?.message || 'Login failed',
-        errorCode: respData?.error?.code 
+        errorCode: respData?.error?.code
       };
     }
   };
@@ -81,11 +73,9 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, password) => {
     try {
       const response = await api.post('/auth/register', { name, email, password });
-      
-      const token = response.data.token || response.data.data?.token;
+
       const user = response.data.user || response.data.data?.user;
 
-      localStorage.setItem('token', token);
       dispatch({ type: 'LOGIN', payload: user });
       navigate('/dashboard');
       return { success: true };
@@ -94,10 +84,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    dispatch({ type: 'LOGOUT' });
-    navigate('/login');
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (error) {
+      // Even if the server call fails, clear the client state
+      console.error('Logout request failed:', error);
+    } finally {
+      dispatch({ type: 'LOGOUT' });
+      navigate('/login');
+    }
   };
 
   const updateProfile = async (name, email) => {
