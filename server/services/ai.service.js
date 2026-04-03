@@ -234,3 +234,40 @@ export async function generateQuizFromImage(imageBuffer, mimeType, count = 5) {
   return object.questions;
 }
 
+/**
+ * Generate a step-by-step diagram explanation for an image stored at a public URL.
+ *
+ * @param {string} imageUrl       - Publicly accessible URL of the diagram (e.g. Cloudinary).
+ * @param {string} combinedContext - All topic notes / extracted texts joined together.
+ * @param {string} customPrompt   - Optional student question / extra context.
+ * @returns {Promise<string>}      Markdown-formatted explanation.
+ */
+export async function generateDiagramExplanation(imageUrl, combinedContext = '', customPrompt = '') {
+  const contextSection = combinedContext.trim()
+    ? `\n\nUse the following class notes for additional context:\n"""\n${combinedContext.trim()}\n"""`
+    : '';
+
+  const questionSection = customPrompt.trim()
+    ? `\n\nAlso specifically address the student's request: "${customPrompt.trim()}"`
+    : '';
+
+  const prompt =
+    `You are an expert tutor. Explain the attached diagram step-by-step so a student can fully understand it.${contextSection}${questionSection}\n\nFormat your response in Markdown. Use headings, bullet points, and LaTeX math (wrapped in $...$ or $$...$$) where appropriate.`;
+
+  return withVisionFallback(async (modelId) => {
+    const { text } = await generateText({
+      model: openrouter(modelId),
+      maxTokens: 2048,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: prompt },
+            { type: 'image', image: new URL(imageUrl) },
+          ],
+        },
+      ],
+    });
+    return text.trim();
+  });
+}

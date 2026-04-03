@@ -12,6 +12,7 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { toastConfirm } from '../utils/toastConfirm';
+import DiagramDropExplainer from '../components/DiagramDropExplainer';
 const TopicDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -131,6 +132,28 @@ const TopicDetail = () => {
   const handleAIGenerated = (updatedTopic) => {
     setTopic(updatedTopic);
   };
+
+  // Called by DiagramDropExplainer when an image is saved after explanation
+  const handleImageSaved = (savedImage) => {
+    setTopic((prev) => ({
+      ...prev,
+      sourceImages: [...(prev.sourceImages || []), savedImage],
+    }));
+  };
+
+  // Called by DiagramDropExplainer when an image already exists
+  const handlePreviewRequested = (img) => {
+    setPreviewFile({
+      _id: img._id,
+      name: img.fileName,
+      preview: img.url,
+      url: img.url,
+      type: 'image/jpeg', // Force image type to render correctly in modal
+      extractedText: img.extractedText || '',
+      diagramExplanation: img.diagramExplanation || '',
+    });
+  };
+
 
   if (loading && !topic) {
     return (
@@ -254,9 +277,13 @@ const TopicDetail = () => {
                           onClick={(e) => {
                             e.stopPropagation();
                             setPreviewFile({
+                              _id: img._id,
                               name: fileName,
                               preview: img.url,
-                              type: 'image/jpeg' // Fallback image type
+                              url: img.url,
+                              type: 'image/jpeg',
+                              extractedText: img.extractedText || '',
+                              diagramExplanation: img.diagramExplanation || '',
                             });
                           }}
                           className="p-2 text-outline-variant hover:text-primary rounded-full hover:bg-primary/10 transition-all"
@@ -281,7 +308,7 @@ const TopicDetail = () => {
                   <div
                     key={doc._id}
                     onClick={() => setSelectedDoc(doc)}
-                    className="group relative flex items-center justify-between p-5 bg-surface-container-low dark:bg-gray-700/50 rounded-2xl border border-transparent cursor-pointer hover:border-primary/100 hover:border-solid hover:border-2 hover:bg-surface-container-lowest hover:shadow-sm dark:hover:bg-gray-700 transition-all border-dashed overflow-hidden"
+                    className="group relative flex items-center justify-between p-5 bg-surface-container-low dark:bg-gray-700/50 rounded-2xl border border-transparent cursor-pointer hover:border-primary hover:border-solid hover:border-2 hover:bg-surface-container-lowest hover:shadow-sm dark:hover:bg-gray-700 transition-all border-dashed overflow-hidden"
                   >
                     <div className="flex-1 min-w-0 flex items-start gap-4 pr-4">
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
@@ -423,6 +450,14 @@ const TopicDetail = () => {
             </div>
           )}
 
+          {/* Diagram Drop Explainer */}
+          <DiagramDropExplainer 
+            topicId={topic._id} 
+            onImageSaved={handleImageSaved} 
+            onPreviewRequested={handlePreviewRequested} 
+          />
+
+
         </aside>
 
       </div>
@@ -462,6 +497,7 @@ const TopicDetail = () => {
       {/* File Preview Modal */}
       <FilePreviewModal 
         file={previewFile}
+        topicId={topic._id}
         onClose={() => setPreviewFile(null)}
       />
     </div>

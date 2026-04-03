@@ -17,6 +17,10 @@ const sourceImageSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  diagramExplanation: {
+    type: String,
+    default: '',
+  },
   uploadedAt: {
     type: Date,
     default: Date.now,
@@ -38,6 +42,10 @@ const sourceDocumentSchema = new mongoose.Schema({
     required: true,
   },
   extractedText: {
+    type: String,
+    default: '',
+  },
+  diagramExplanation: {
     type: String,
     default: '',
   },
