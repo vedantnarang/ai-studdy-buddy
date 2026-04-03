@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, useToasterStore, toast } from 'react-hot-toast';
+import { useEffect } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -20,6 +21,21 @@ import NotFound from './pages/NotFound';
 import Pricing from './pages/Pricing';
 import Profile from './pages/Profile';
 import './App.css';
+
+const TOAST_LIMIT = 2;
+
+const ToastLimitManager = () => {
+  const { toasts } = useToasterStore();
+
+  useEffect(() => {
+    toasts
+      .filter((t) => t.visible)
+      .filter((_, i) => i >= TOAST_LIMIT)
+      .forEach((t) => toast.dismiss(t.id));
+  }, [toasts]);
+
+  return null;
+};
 
 function App() {
   return (
@@ -42,6 +58,7 @@ function App() {
           },
         }}
       />
+      <ToastLimitManager />
       <AuthProvider>
         <Routes>
           {/* Landing page for guests, redirect to dashboard for authenticated */}
