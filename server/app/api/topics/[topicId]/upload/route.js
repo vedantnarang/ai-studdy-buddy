@@ -2,21 +2,10 @@ import { connectDB } from "@/lib/db";
 import { getAuthUser } from "@/lib/authHelper";
 import { successResponse, errorResponse } from "@/lib/apiResponse";
 import Topic from "@/models/Topic";
-import { PDFParse } from "pdf-parse"; 
-import { extractTextFromScannedPDF } from "@/services/ocr.service";
+import { PDFParse } from "pdf-parse";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { extractTextFromImageUrl } from "@/services/ai.service";
 
-// Check if pdf-parse output is meaningful text or just page markers / garbage
-function isTextMeaningful(text) {
-  if (!text) return false;
-  // Strip out common pdf-parse page markers like "-- 1 of 2 --"
-  const cleaned = text
-    .replace(/--\s*\d+\s*of\s*\d+\s*--/gi, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return cleaned.length >= 50;
-}
 
 export async function POST(request, { params }) {
   try {
@@ -79,23 +68,7 @@ export async function POST(request, { params }) {
           extractedText = "";
         }
 
-        // Step 2: If pdf-parse returned garbage/empty, fall back to OCR
-        if (!isTextMeaningful(extractedText)) {
-          console.log(`Text from pdf-parse not meaningful for "${file.name}", falling back to OCR...`);
-          try {
-            extractedText = await extractTextFromScannedPDF(buffer, file.name);
-            extractionMethod = "ocr";
-            console.log(`OCR succeeded for "${file.name}" — extracted ${extractedText.length} chars`);
-          } catch (ocrError) {
-            console.error(`OCR also failed for ${file.name}:`, ocrError.message);
-            results.push({ 
-              fileName: file.name, 
-              success: false, 
-              error: `Could not extract text. pdf-parse found no text, and OCR failed: ${ocrError.message}` 
-            });
-            continue;
-          }
-        }
+
       } else if (file.type === 'text/plain') {
         fileType = 'txt';
         extractedText = buffer.toString('utf-8');
