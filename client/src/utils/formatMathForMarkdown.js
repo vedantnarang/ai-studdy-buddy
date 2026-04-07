@@ -50,8 +50,8 @@ const normalizeEmphasisTokens = (text) => {
 
   // Convert markdown bold/italic into explicit HTML tags so styling persists
   // even when mixed with inline HTML like <mark> in the same paragraph.
-  output = output.replace(/\*\*([^*\n][^*\n]*?)\*\*/g, '<strong>$1</strong>');
-  output = output.replace(/(^|[^\*])\*([^*\n][^*\n]*?)\*(?!\*)/g, '$1<em>$2</em>');
+  output = output.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>');
+  output = output.replace(/(^|[^\*])\*([^*]+?)\*(?!\*)/g, '$1<em>$2</em>');
 
   return output;
 };

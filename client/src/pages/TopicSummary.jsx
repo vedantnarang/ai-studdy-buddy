@@ -289,14 +289,14 @@ const TopicSummary = () => {
             {/* Custom Toolbar */}
             <div className="flex items-center gap-2 p-2 px-4 border-b border-gray-200 dark:border-gray-700 bg-surface-container-low dark:bg-gray-800 flex-wrap">
               <button 
-                onClick={() => applyFormat('<strong>', '</strong>')}
+                onClick={() => applyFormat('**', '**')}
                 className="w-8 h-8 flex items-center justify-center font-bold text-on-surface dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
                 title="Bold (Selection or Cursor)"
               >
                 B
               </button>
               <button 
-                onClick={() => applyFormat('<em>', '</em>')}
+                onClick={() => applyFormat('*', '*')}
                 className="w-8 h-8 flex items-center justify-center italic font-serif font-bold text-on-surface dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
                 title="Italic (Selection or Cursor)"
               >
