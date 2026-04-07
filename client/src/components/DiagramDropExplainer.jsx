@@ -178,7 +178,13 @@ const DiagramDropExplainer = ({ topicId, onImageSaved, onPreviewRequested }) => 
         return;
       }
 
-      setExplanation(text || '');
+      // Success: Clear the drop explainer form
+      handleClear();
+      
+      // Auto-open the preview so the user immediately sees the result in the standard "Uploads" preview format
+      if (savedImage && typeof onPreviewRequested === 'function') {
+        onPreviewRequested(savedImage);
+      }
     } catch (err) {
       setInlineError(err.message || 'Something went wrong. Please try again.');
     } finally {
@@ -322,17 +328,6 @@ const DiagramDropExplainer = ({ topicId, onImageSaved, onPreviewRequested }) => 
             )}
           </button>
 
-          {/* Explanation output */}
-          {explanation && (
-            <div className="mt-1 prose prose-sm dark:prose-invert max-w-none bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700/40 rounded-2xl p-4 max-h-72 overflow-y-auto">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm, remarkMath]}
-                rehypePlugins={[rehypeKatex]}
-              >
-                {explanation}
-              </ReactMarkdown>
-            </div>
-          )}
         </div>
       </div>
     </>

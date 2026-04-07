@@ -12,6 +12,26 @@ const FilePreviewModal = ({ file, onClose, topicId }) => {
   const [isExplaining, setIsExplaining] = useState(false);
   const [explanation, setExplanation] = useState(file?.diagramExplanation || '');
   const [explainError, setExplainError] = useState('');
+  
+  // New state for manual & AI text extraction
+  const [isEditingText, setIsEditingText] = useState(false);
+  const [editableText, setEditableText] = useState(file?.extractedText || '');
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
+  // Bulletproof state synchronization
+  React.useEffect(() => {
+    if (file) {
+      setExplanation(file.diagramExplanation || '');
+      setCustomPrompt('');
+      setExplainError('');
+      setIsEditingText(false);
+      setEditableText(file.extractedText || '');
+      setSaveError('');
+      setIsExplaining(false);
+      setIsExtracting(false);
+    }
+  }, [file]);
 
   if (!file) return null;
   const isImage = file.type?.startsWith('image/');
@@ -47,6 +67,53 @@ const FilePreviewModal = ({ file, onClose, topicId }) => {
       setExplainError(err.message || 'Something went wrong. Please try again.');
     } finally {
       setIsExplaining(false);
+    }
+  };
+
+  const handleExtractText = async () => {
+    if (!file._id || !topicId) return;
+    setIsExtracting(true);
+    setSaveError('');
+
+    try {
+      const res = await fetch(`${API_BASE}/api/topics/${topicId}/images`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageId: file._id }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || 'Extraction failed');
+
+      setEditableText(data.data?.extractedText || '');
+      setIsEditingText(false);
+    } catch (err) {
+      setSaveError(err.message || 'Failed to extract text.');
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  const handleSaveManualText = async () => {
+    if (!file._id || !topicId) return;
+    setIsExtracting(true);
+    setSaveError('');
+
+    try {
+      const res = await fetch(`${API_BASE}/api/topics/${topicId}/documents/${file._id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ extractedText: editableText }),
+      });
+
+      if (!res.ok) throw new Error('Failed to save text.');
+      setIsEditingText(false);
+    } catch (err) {
+      setSaveError(err.message || 'Failed to save text.');
+    } finally {
+      setIsExtracting(false);
     }
   };
 
@@ -96,66 +163,98 @@ const FilePreviewModal = ({ file, onClose, topicId }) => {
             {/* Right – AI panel */}
             <div className="flex flex-col gap-5 p-5 overflow-y-auto max-h-[85vh] border-l border-gray-200 dark:border-gray-700">
 
-              {/* Extracted text */}
-              {file.extractedText ? (
-                <section>
-                  <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-widest">
+              <section>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
                     Extracted Text
                   </h4>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 max-h-36 overflow-y-auto whitespace-pre-wrap leading-relaxed border border-gray-200 dark:border-gray-700">
-                    {file.extractedText}
+                  {!isEditingText && editableText && (
+                    <button 
+                      onClick={() => setIsEditingText(true)}
+                      className="text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 text-xs font-semibold flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">edit</span>
+                      Edit
+                    </button>
+                  )}
+                </div>
+
+                {isEditingText ? (
+                  <div className="flex flex-col gap-3">
+                    <textarea 
+                      value={editableText}
+                      onChange={(e) => setEditableText(e.target.value)}
+                      placeholder="Type the text found in the image here..."
+                      className="w-full text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 p-3 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <button 
+                        disabled={isExtracting}
+                        onClick={() => { setIsEditingText(false); setEditableText(file.extractedText || ''); }}
+                        className="px-3 py-1.5 text-xs text-gray-500 font-bold hover:bg-gray-100 rounded-lg transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                         disabled={isExtracting}
+                         onClick={handleSaveManualText}
+                         className="px-3 py-1.5 text-xs bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+                      >
+                        {isExtracting ? 'Saving...' : 'Save Text'}
+                      </button>
+                    </div>
                   </div>
-                </section>
-              ) : (
-                <p className="text-sm text-gray-400 dark:text-gray-500 italic">
-                  No text was extracted from this image.
-                </p>
-              )}
+                ) : editableText ? (
+                  <div className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 max-h-36 overflow-y-auto whitespace-pre-wrap leading-relaxed border border-gray-200 dark:border-gray-700">
+                    {editableText}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4 bg-gray-50 dark:bg-gray-900/40 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+                      No text has been extracted for this image yet.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                      <button 
+                        onClick={handleExtractText}
+                        disabled={isExtracting}
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs font-bold rounded-xl border border-indigo-200 dark:border-indigo-700 hover:bg-indigo-100 transition-all shadow-sm"
+                      >
+                        {isExtracting ? (
+                           <>
+                           <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                           </svg>
+                           Extracting...
+                         </>
+                        ) : (
+                          <>
+                            <span className="material-symbols-outlined text-[16px]">visibility</span>
+                            Vision AI Extraction
+                          </>
+                        )}
+                      </button>
+                      <button 
+                        onClick={() => setIsEditingText(true)}
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs font-bold rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-50 transition-all shadow-sm"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">keyboard</span>
+                        Give Manually
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {saveError && <p className="text-xs text-red-500 mt-2">{saveError}</p>}
+              </section>
 
               <div className="border-t border-gray-200 dark:border-gray-700" />
 
               {/* Explain section */}
               <section className="flex flex-col gap-3">
-                <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-                  ✨ Explain this Diagram
+                <h4 className="text-xs font-bold text-indigo-500 uppercase tracking-widest flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
+                  Diagram Explanation
                 </h4>
-
-                <textarea
-                  value={customPrompt}
-                  onChange={(e) => setCustomPrompt(e.target.value)}
-                  placeholder="Add specific context or questions..."
-                  rows={3}
-                  className="w-full text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 p-3 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-                />
-
-                <button
-                  type="button"
-                  onClick={handleExplainDiagram}
-                  disabled={isExplaining}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm"
-                >
-                  {isExplaining ? (
-                    <>
-                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                      </svg>
-                      Explaining…
-                    </>
-                  ) : (
-                    <>✨ Explain this Diagram</>
-                  )}
-                </button>
-
-                {/* Error state */}
-                {explainError && (
-                  <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/50 rounded-lg p-3">
-                    <svg className="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    {explainError}
-                  </div>
-                )}
 
                 {/* Explanation output */}
                 {explanation ? (
@@ -168,8 +267,48 @@ const FilePreviewModal = ({ file, onClose, topicId }) => {
                     </ReactMarkdown>
                   </div>
                 ) : !explainError && (
-                  <div className="text-sm text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-900/40 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center">
-                    The AI explanation will appear here.
+                  <div className="text-sm text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-900/40 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center italic">
+                    Generate an AI explanation of this diagram below.
+                  </div>
+                )}
+                
+                {/* Error state */}
+                {explainError && (
+                  <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/50 rounded-lg p-3">
+                    <svg className="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {explainError}
+                  </div>
+                )}
+
+                {/* Only show prompt if explanation hasn't been generated yet */}
+                {!explanation && (
+                  <div className="flex gap-2 items-start mt-2">
+                    <textarea
+                      value={customPrompt}
+                      onChange={(e) => setCustomPrompt(e.target.value)}
+                      placeholder="Add specific context to explain... (Optional)"
+                      rows={1}
+                      className="w-full text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 p-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleExplainDiagram}
+                      disabled={isExplaining}
+                      className="shrink-0 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm"
+                    >
+                      {isExplaining ? (
+                        <>
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                          </svg>
+                        </>
+                      ) : (
+                        <>Generate</>
+                      )}
+                    </button>
                   </div>
                 )}
               </section>

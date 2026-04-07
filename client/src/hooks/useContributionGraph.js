@@ -11,6 +11,7 @@ export const useContributionGraph = () => {
       setLoading(true);
       setError(null);
       const res = await api.get('/contribution-graph');
+      console.log(res.data.data);
       setDays(res.data.data || []);
     } catch (err) {
       console.error('Contribution graph fetch error:', err);

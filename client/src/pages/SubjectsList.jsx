@@ -408,7 +408,7 @@ const SubjectsList = () => {
       {/* Focus Areas Section */}
       {subjects.length > 0 && (
         <section className="mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="bg-surface-container-low rounded-3xl p-8 border border-white dark:border-gray-800 shadow-xs">
+          <div className="bg-surface-container-low rounded-3xl p-8 border border-blue-400 dark:border-gray-800 shadow-xs">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
               <div>
                 <h3 className="text-xl font-bold font-headline text-on-surface flex items-center gap-2">

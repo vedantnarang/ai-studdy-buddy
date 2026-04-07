@@ -13,9 +13,9 @@ const PRIMARY_MODEL = process.env.OPENROUTER_PRIMARY_MODEL || 'google/gemma-3-12
 const FALLBACK_MODEL = process.env.OPENROUTER_FALLBACK_MODEL || 'openrouter/auto';
 
 const VISION_MODELS = [
+  'google/gemma-3-12b-it:free',
   'google/gemini-2.5-flash',
   'meta-llama/llama-3.2-11b-vision-instruct:free',
-  'google/gemma-3-12b-it:free',
 ];
 
 function getModel(useFallback = false) {
@@ -55,7 +55,7 @@ async function withVisionFallback(fn) {
     }
   }
   
-  throw new Error(`All vision models are currently unavailable. Last failure: ${lastError?.message || 'Unknown'}`);
+  throw new Error(`All vision models are currently unavailable.`);
 }
 
 

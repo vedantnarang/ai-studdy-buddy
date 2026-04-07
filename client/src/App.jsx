@@ -70,6 +70,9 @@ function App() {
 
           {/* Protected Routes (Authenticated only wrapped in AppLayout) */}
           <Route element={<ProtectedRoute />}>
+             {/* Full-screen immersive pages — have their own nav, no AppLayout */}
+             <Route path="/topic/:id/quiz" element={<QuizStudy />} />
+
              <Route element={<AppLayout />}>
                  {/* Main App Screens */}
                  <Route path="/dashboard" element={<SubjectsList />} />
@@ -78,7 +81,6 @@ function App() {
                  <Route path="/topic/:id" element={<TopicDetail />} />
                  <Route path="/topic/:id/summary" element={<TopicSummary />} />
                  <Route path="/topic/:id/flashcards" element={<FlashcardStudy />} />
-                 <Route path="/topic/:id/quiz" element={<QuizStudy />} />
                  <Route path="/pricing" element={<Pricing />} />
                  <Route path="/topic/:id/quiz-history" element={<QuizHistory />} />
                  <Route path="/profile" element={<Profile />} />

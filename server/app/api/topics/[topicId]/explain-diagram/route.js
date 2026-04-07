@@ -173,10 +173,14 @@ export async function POST(request, { params }) {
       console.error(`Explain diagram AI error [${code}]:`, err.message);
     }
 
-    // ── 4. If explanation succeeded, persist it ───────────────────────────────
+    // ── 5. If explanation succeeded, persist it (Atomic update to avoid VersionError) ──
     if (explanation) {
+      await Topic.updateOne(
+        { _id: topicId, "sourceImages._id": savedImage._id },
+        { $set: { "sourceImages.$.diagramExplanation": explanation } }
+      );
+      // Update local object purely for the response
       savedImage.diagramExplanation = explanation;
-      await topic.save();
     }
 
     // Always return the saved image so the client can append it to the uploads list.

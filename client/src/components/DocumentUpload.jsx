@@ -248,10 +248,12 @@ const DocumentUpload = ({ onUpload, uploading: externalUploading, existingFiles 
         <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>
       )}
 
-      <FilePreviewModal 
-        file={previewFile}
-        onClose={() => setPreviewFile(null)}
-      />
+      {previewFile && (
+        <FilePreviewModal 
+          file={previewFile}
+          onClose={() => setPreviewFile(null)}
+        />
+      )}
     </div>
   );
 };

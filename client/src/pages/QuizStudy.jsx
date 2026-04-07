@@ -121,9 +121,9 @@ const QuizStudy = () => {
   const currentSelectedAnswer = hasAnswered ? currentAnswerData.index : selectedAnswer;
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-[#111827] text-on-surface dark:text-gray-100 font-body pb-24">
+    <div className="min-h-screen bg-surface dark:bg-[#111827] text-on-surface dark:text-gray-100 font-body pb-24 pt-16">
       {/* TopNavBar Shell */}
-      <nav className="sticky top-0 w-full z-30 flex justify-between items-center px-6 md:px-8 py-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-surface-variant/20 dark:border-gray-800">
+      <nav className="fixed top-0 left-0 right-0 w-full z-50 flex justify-between items-center px-6 md:px-8 py-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-surface-variant/20 dark:border-gray-800">
         <div className="flex items-center gap-4">
           <span className="text-lg font-black text-primary font-headline tracking-tight">Study Buddy</span>
           <div className="h-6 w-px bg-surface-variant dark:bg-gray-700 mx-1 md:mx-2 hidden sm:block"></div>

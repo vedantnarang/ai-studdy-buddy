@@ -100,7 +100,7 @@ const Profile = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant dark:text-gray-400 ml-1">University Email</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant dark:text-gray-400 ml-1">Email</label>
                 <div className="group relative flex items-center">
                   <input 
                     ref={emailInputRef}

@@ -250,7 +250,17 @@ const TopicDetail = () => {
                   return (
                     <div
                       key={img._id || `img-${index}`}
-                      onClick={() => setSelectedDoc({ _id: img._id, fileName, fileType: 'image', extractedText: img.extractedText, imageUrl: img.url })}
+                      onClick={() => {
+                        setPreviewFile({
+                          _id: img._id,
+                          name: fileName,
+                          preview: img.url,
+                          url: img.url,
+                          type: 'image/jpeg',
+                          extractedText: img.extractedText || '',
+                          diagramExplanation: img.diagramExplanation || '',
+                        });
+                      }}
                       className="group relative flex items-center justify-between p-5 bg-surface-container-low dark:bg-gray-700/50 rounded-2xl border border-transparent cursor-pointer hover:border-primary/30 hover:bg-surface-container-lowest hover:shadow-sm dark:hover:bg-gray-700 transition-all border-dashed overflow-hidden"
                     >
                       <div className="flex-1 min-w-0 flex items-start gap-4 pr-4">
@@ -495,11 +505,13 @@ const TopicDetail = () => {
       )}
 
       {/* File Preview Modal */}
-      <FilePreviewModal 
-        file={previewFile}
-        topicId={topic._id}
-        onClose={() => setPreviewFile(null)}
-      />
+      {previewFile && (
+        <FilePreviewModal 
+          file={previewFile}
+          topicId={topic._id}
+          onClose={() => setPreviewFile(null)}
+        />
+      )}
     </div>
   );
 };

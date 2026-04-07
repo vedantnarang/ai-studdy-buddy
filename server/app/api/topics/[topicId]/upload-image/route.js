@@ -5,20 +5,16 @@ import Topic from "@/models/Topic";
 import { uploadImage } from "@/services/cloudinary.service";
 
 export async function POST(request, { params }) {
-    const userPayload= await getAuthUser(request);
-    if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
   try {
-    const { topicId } = await params;
-    const user = await getAuthUser(request);
+    const userPayload = await getAuthUser(request);
+    if (!userPayload) return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
 
-    if (!user) {
-      return errorResponse("Unauthorized", "UNAUTHORIZED", 401);
-    }
+    const { topicId } = await params;
 
     await connectDB();
 
     // Verify topic exists and belongs to the user
-    const topic = await Topic.findOne({ _id: topicId, userId: user.id });
+    const topic = await Topic.findOne({ _id: topicId, userId: userPayload.userId });
     if (!topic) {
       return errorResponse("Topic not found or unauthorized", "NOT_FOUND", 404);
     }
@@ -40,6 +36,19 @@ export async function POST(request, { params }) {
       return errorResponse("File too large. Max size is 5MB.", "FILE_TOO_LARGE", 400);
     }
 
+    // Deduplication check: if identical file already exists, return it directly
+    const existingImage = topic.sourceImages.find(
+      img => img.fileName === file.name && img.fileSize === file.size
+    );
+
+    if (existingImage) {
+      return successResponse({
+        message: "Image already exists, using existing version",
+        imageUrl: existingImage.url,
+        publicId: existingImage.publicId,
+        topic
+      });
+    }
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -52,25 +61,24 @@ export async function POST(request, { params }) {
       return errorResponse(uploadError.message || "Image upload failed", "UPLOAD_FAILED", 500);
     }
 
+    // Overwrite Logic: Remove existing images that share the incoming file's name
+    topic.sourceImages = topic.sourceImages.filter(img => img.fileName !== file.name);
+
     // Update Topic with the new image
-    const updatedTopic = await Topic.findOneAndUpdate(
-      { _id: topicId, userId: user.id },
-      {
-        $push: {
-          sourceImages: {
-            url: uploadResult.url,
-            publicId: uploadResult.publicId,
-          }
-        }
-      },
-      { new: true }
-    );
+    topic.sourceImages.push({
+      fileName: file.name,
+      fileSize: file.size,
+      url: uploadResult.url,
+      publicId: uploadResult.publicId,
+    });
+    
+    await topic.save();
 
     return successResponse({
       message: "Image uploaded and topic updated successfully",
       imageUrl: uploadResult.url,
       publicId: uploadResult.publicId,
-      topic: updatedTopic
+      topic
     });
 
   } catch (error) {
