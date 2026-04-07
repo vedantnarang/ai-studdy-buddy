@@ -87,9 +87,9 @@ const Register = () => {
                 setName(e.target.value);
                 if (fieldErrors.name) setFieldErrors(prev => ({ ...prev, name: null }));
               }}
-              className={`mt-1 block w-full px-4 py-3 rounded-lg border ${fieldErrors.name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-500 focus:ring-blue-500'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:border-transparent transition-colors shadow-sm`}
+              className={`mt-1 block w-full px-4 py-3 rounded-lg border ${fieldErrors.name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-500 focus:ring-blue-500'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:border-transparent transition-colors shadow-sm mb-2`}
               placeholder="Enter your name"
-              required 
+             
             />
             {fieldErrors.name && <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.name}</p>}
           </div>
@@ -102,9 +102,9 @@ const Register = () => {
                 setEmail(e.target.value);
                 if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: null }));
               }}
-              className={`mt-1 block w-full px-4 py-3 rounded-lg border ${fieldErrors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-500 focus:ring-blue-500'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:border-transparent transition-colors shadow-sm`}
+              className={`mt-1 block w-full px-4 py-3 rounded-lg border ${fieldErrors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-500 focus:ring-blue-500'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:border-transparent transition-colors shadow-sm mb-2`}
               placeholder="Enter your email"
-              required 
+            
             />
             {fieldErrors.email && <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.email}</p>}
           </div>
@@ -117,9 +117,9 @@ const Register = () => {
                 setPassword(e.target.value);
                 if (fieldErrors.password) setFieldErrors(prev => ({ ...prev, password: null }));
               }}
-              className={`mt-1 block w-full px-4 py-3 rounded-lg border ${fieldErrors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-500 focus:ring-blue-500'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:border-transparent transition-colors shadow-sm`}
+              className={`mt-1 block w-full px-4 py-3 rounded-lg border ${fieldErrors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-500 focus:ring-blue-500'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:border-transparent transition-colors shadow-sm mb-2`}
               placeholder="Enter your password"
-              required 
+           
               minLength={6}
             />
             {fieldErrors.password && <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.password}</p>}

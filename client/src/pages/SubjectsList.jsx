@@ -51,13 +51,18 @@ const SubjectsList = () => {
   const handleCreate = async (e) => {
     e.preventDefault();
     setCreateError("");
-    
+
     // Manual validation
     let errors = {};
     if (!newTitle.trim()) {
       errors.title = "Subject title is required";
     }
-    const wordCount = newDescription.trim() ? newDescription.trim().split(/\s+/).filter(word => word.length > 0).length : 0;
+    const wordCount = newDescription.trim()
+      ? newDescription
+          .trim()
+          .split(/\s+/)
+          .filter((word) => word.length > 0).length
+      : 0;
     if (wordCount > 20) {
       errors.description = "Description cannot exceed 20 words";
     }
@@ -66,7 +71,7 @@ const SubjectsList = () => {
       setFieldErrors(errors);
       return;
     }
-    
+
     setFieldErrors({});
 
     setCreateLoading(true);
@@ -178,18 +183,22 @@ const SubjectsList = () => {
                     value={newTitle}
                     onChange={(e) => {
                       setNewTitle(e.target.value);
-                      if (fieldErrors.title) setFieldErrors(prev => ({ ...prev, title: null }));
+                      if (fieldErrors.title)
+                        setFieldErrors((prev) => ({ ...prev, title: null }));
                     }}
                     placeholder="e.g. Molecular Biology"
-                    className={`w-full px-4 py-3 bg-surface-container-low border-2 rounded-xl text-on-surface focus:ring-2 focus:border-transparent outline-none transition-all ${
-                      fieldErrors.title 
-                        ? 'border-red-500 focus:ring-red-500/40' 
-                        : 'border-transparent focus:ring-primary/40'
+                    className={`w-full px-4 py-3 bg-surface-container-low border-2 rounded-xl text-on-surface focus:ring-2 focus:border-transparent outline-none transition-all mb-2 ${
+                      fieldErrors.title
+                        ? "border-red-500 focus:ring-red-500/40"
+                        : "border-transparent focus:ring-primary/40"
                     }`}
-                    required
                     autoFocus
                   />
-                  {fieldErrors.title && <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.title}</p>}
+                  {fieldErrors.title && (
+                    <p className="mt-1 text-xs text-red-500 font-medium">
+                      {fieldErrors.title}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-on-surface-variant mb-3">
@@ -268,12 +277,25 @@ const SubjectsList = () => {
                   <label className="block text-sm font-semibold text-on-surface-variant">
                     Description (Optional)
                   </label>
-                  <span className={`text-[10px] font-bold uppercase tracking-wider ${
-                    (newDescription.trim() ? newDescription.trim().split(/\s+/).filter(w => w.length > 0).length : 0) > 20 
-                      ? 'text-red-500' 
-                      : 'text-tertiary'
-                  }`}>
-                    {newDescription.trim() ? newDescription.trim().split(/\s+/).filter(w => w.length > 0).length : 0} / 20 words
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-wider ${
+                      (newDescription.trim()
+                        ? newDescription
+                            .trim()
+                            .split(/\s+/)
+                            .filter((w) => w.length > 0).length
+                        : 0) > 20
+                        ? "text-red-500"
+                        : "text-tertiary"
+                    }`}
+                  >
+                    {newDescription.trim()
+                      ? newDescription
+                          .trim()
+                          .split(/\s+/)
+                          .filter((w) => w.length > 0).length
+                      : 0}{" "}
+                    / 20 words
                   </span>
                 </div>
                 <input
@@ -281,16 +303,24 @@ const SubjectsList = () => {
                   value={newDescription}
                   onChange={(e) => {
                     setNewDescription(e.target.value);
-                    if (fieldErrors.description) setFieldErrors(prev => ({ ...prev, description: null }));
+                    if (fieldErrors.description)
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        description: null,
+                      }));
                   }}
                   placeholder="e.g. Cellular structures, DNA replication, and gene expression."
                   className={`w-full px-4 py-3 pt-2 bg-surface-container-low border-2 rounded-xl text-on-surface focus:ring-2 focus:border-transparent outline-none transition-all ${
-                    fieldErrors.description 
-                      ? 'border-red-500 focus:ring-red-500/40' 
-                      : 'border-transparent focus:ring-primary/40'
+                    fieldErrors.description
+                      ? "border-red-500 focus:ring-red-500/40"
+                      : "border-transparent focus:ring-primary/40"
                   }`}
                 />
-                {fieldErrors.description && <p className="mt-1 text-xs text-red-500 font-medium">{fieldErrors.description}</p>}
+                {fieldErrors.description && (
+                  <p className="mt-1 text-xs text-red-500 font-medium">
+                    {fieldErrors.description}
+                  </p>
+                )}
               </div>
 
               <div className="flex gap-3 justify-end mt-8 pt-4 border-t border-gray-100 dark:border-gray-700">
@@ -465,36 +495,43 @@ const SubjectsList = () => {
                             const accentColor = topic.subjectColor || "#0053db";
                             const shadowColor = `${accentColor}40`;
                             return (
-                            <Link
-                              to={`/topic/${topic.id}`}
-                              key={topic.id}
-                              className="flex flex-col gap-2 p-4 rounded-xl bg-surface-container-low border-2 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-                              style={{ borderColor: accentColor }}
-                              onMouseEnter={(e) => e.currentTarget.style.boxShadow = `0 8px 24px -4px ${shadowColor}`}
-                              onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
-                            >
-                              <div className="flex justify-between items-start mb-1">
-                                <div className="flex flex-col">
-                                  <span className="text-sm font-bold text-on-surface truncate pr-4">
-                                    {topic.title}
-                                  </span>
-                                  <span className="text-[10px] font-black uppercase tracking-wider mt-0.5" style={{ color: accentColor }}>
-                                    {topic.subjectTitle || "Unknown Subject"}
+                              <Link
+                                to={`/topic/${topic.id}`}
+                                key={topic.id}
+                                className="flex flex-col gap-2 p-4 rounded-xl bg-surface-container-low border-2 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                                style={{ borderColor: accentColor }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.boxShadow = `0 8px 24px -4px ${shadowColor}`)
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.boxShadow = "none")
+                                }
+                              >
+                                <div className="flex justify-between items-start mb-1">
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-on-surface truncate pr-4">
+                                      {topic.title}
+                                    </span>
+                                    <span
+                                      className="text-[10px] font-black uppercase tracking-wider mt-0.5"
+                                      style={{ color: accentColor }}
+                                    >
+                                      {topic.subjectTitle || "Unknown Subject"}
+                                    </span>
+                                  </div>
+                                  <span className="text-xs font-black text-error mt-0.5">
+                                    {Math.round(topic.avgScore)}%
                                   </span>
                                 </div>
-                                <span className="text-xs font-black text-error mt-0.5">
-                                  {Math.round(topic.avgScore)}%
-                                </span>
-                              </div>
-                              <div className="w-full h-2.5 bg-surface-container-high rounded-full overflow-hidden mt-1">
-                                <div
-                                  className="h-full bg-error transition-all duration-1000 ease-out"
-                                  style={{
-                                    width: `${topic.avgScore}%`,
-                                  }}
-                                ></div>
-                              </div>
-                            </Link>
+                                <div className="w-full h-2.5 bg-surface-container-high rounded-full overflow-hidden mt-1">
+                                  <div
+                                    className="h-full bg-error transition-all duration-1000 ease-out"
+                                    style={{
+                                      width: `${topic.avgScore}%`,
+                                    }}
+                                  ></div>
+                                </div>
+                              </Link>
                             );
                           })}
                         </div>
@@ -516,41 +553,46 @@ const SubjectsList = () => {
                             const accentColor = topic.subjectColor || "#fbbf24";
                             const shadowColor = `${accentColor}40`;
                             return (
-                            <Link
-                              to={`/topic/${topic.id}`}
-                              key={topic.id}
-                              className="flex items-center justify-between p-4 rounded-xl bg-surface-container-low border-2 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-                              style={{ borderColor: accentColor }}
-                              onMouseEnter={(e) => e.currentTarget.style.boxShadow = `0 8px 24px -4px ${shadowColor}`}
-                              onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
-                            >
-                              <div className="flex items-center gap-4">
-                                <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                                  <span className="material-symbols-outlined text-amber-600 dark:text-amber-400">
-                                    timer
-                                  </span>
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="text-sm font-bold text-on-surface">
-                                    {topic.title}
-                                  </span>
-                                  <span className="text-[10px] font-black uppercase tracking-wider mt-0.5" style={{ color: accentColor }}>
-                                    {topic.subjectTitle || "Unknown Subject"}
-                                  </span>
-                                  <p className="text-[10px] text-tertiary mt-1">
-                                    Last review:{" "}
-                                    {new Date(
-                                      topic.lastReviewed,
-                                    ).toLocaleDateString()}
-                                  </p>
-                                </div>
-                              </div>
-                              <div
-                                className="px-3 py-1.5 bg-amber-500 text-white text-[10px] font-black uppercase rounded-lg hover:bg-amber-600 transition-colors"
+                              <Link
+                                to={`/topic/${topic.id}`}
+                                key={topic.id}
+                                className="flex items-center justify-between p-4 rounded-xl bg-surface-container-low border-2 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                                style={{ borderColor: accentColor }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.boxShadow = `0 8px 24px -4px ${shadowColor}`)
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.boxShadow = "none")
+                                }
                               >
-                                Review
-                              </div>
-                            </Link>
+                                <div className="flex items-center gap-4">
+                                  <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                                    <span className="material-symbols-outlined text-amber-600 dark:text-amber-400">
+                                      timer
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-on-surface">
+                                      {topic.title}
+                                    </span>
+                                    <span
+                                      className="text-[10px] font-black uppercase tracking-wider mt-0.5"
+                                      style={{ color: accentColor }}
+                                    >
+                                      {topic.subjectTitle || "Unknown Subject"}
+                                    </span>
+                                    <p className="text-[10px] text-tertiary mt-1">
+                                      Last review:{" "}
+                                      {new Date(
+                                        topic.lastReviewed,
+                                      ).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="px-3 py-1.5 bg-amber-500 text-white text-[10px] font-black uppercase rounded-lg hover:bg-amber-600 transition-colors">
+                                  Review
+                                </div>
+                              </Link>
                             );
                           })}
                         </div>
@@ -572,35 +614,42 @@ const SubjectsList = () => {
                             const accentColor = topic.subjectColor || "#3b82f6";
                             const shadowColor = `${accentColor}40`;
                             return (
-                            <Link
-                              to={`/topic/${topic.id}`}
-                              key={topic.id}
-                              className="flex flex-col justify-center p-4 rounded-xl bg-surface-container-low border-2 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-                              style={{ borderColor: accentColor }}
-                              onMouseEnter={(e) => e.currentTarget.style.boxShadow = `0 8px 24px -4px ${shadowColor}`}
-                              onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
-                            >
-                              <div className="flex flex-col mb-3">
-                                <span className="text-sm font-bold text-on-surface">
-                                  {topic.title}
-                                </span>
-                                <span className="text-[10px] font-black uppercase tracking-wider mt-0.5" style={{ color: accentColor }}>
-                                  {topic.subjectTitle || "Unknown Subject"}
-                                </span>
-                              </div>
-                              <div className="flex gap-2">
-                                {topic.missing.flashcards && (
-                                  <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-bold rounded-md">
-                                    No Flashcards
+                              <Link
+                                to={`/topic/${topic.id}`}
+                                key={topic.id}
+                                className="flex flex-col justify-center p-4 rounded-xl bg-surface-container-low border-2 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                                style={{ borderColor: accentColor }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.boxShadow = `0 8px 24px -4px ${shadowColor}`)
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.boxShadow = "none")
+                                }
+                              >
+                                <div className="flex flex-col mb-3">
+                                  <span className="text-sm font-bold text-on-surface">
+                                    {topic.title}
                                   </span>
-                                )}
-                                {topic.missing.quiz && (
-                                  <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-[10px] font-bold rounded-md">
-                                    No Quiz
+                                  <span
+                                    className="text-[10px] font-black uppercase tracking-wider mt-0.5"
+                                    style={{ color: accentColor }}
+                                  >
+                                    {topic.subjectTitle || "Unknown Subject"}
                                   </span>
-                                )}
-                              </div>
-                            </Link>
+                                </div>
+                                <div className="flex gap-2">
+                                  {topic.missing.flashcards && (
+                                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-bold rounded-md">
+                                      No Flashcards
+                                    </span>
+                                  )}
+                                  {topic.missing.quiz && (
+                                    <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-[10px] font-bold rounded-md">
+                                      No Quiz
+                                    </span>
+                                  )}
+                                </div>
+                              </Link>
                             );
                           })}
                         </div>
@@ -682,16 +731,21 @@ const SubjectsList = () => {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 w-full max-w-md overflow-hidden animate-in zoom-in-95 fade-in duration-200">
             <div className="p-6">
               <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4">
-                <span className="material-symbols-outlined text-2xl">warning</span>
+                <span className="material-symbols-outlined text-2xl">
+                  warning
+                </span>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Subject Already Exists</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                Subject Already Exists
+              </h3>
               <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-                You already have a subject with this name. Please choose a different name or navigate to the existing subject.
+                You already have a subject with this name. Please choose a
+                different name or navigate to the existing subject.
               </p>
             </div>
             <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-700 flex justify-end transition-colors">
-              <button 
-                onClick={() => setDuplicateModalOpen(false)} 
+              <button
+                onClick={() => setDuplicateModalOpen(false)}
                 className="px-4 py-2 bg-primary hover:bg-primary-dim text-white font-medium rounded-lg shadow-sm transition-colors"
               >
                 Got it

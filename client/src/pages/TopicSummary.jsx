@@ -266,7 +266,7 @@ const TopicSummary = () => {
       {/* Reading Canvas */}
       <div className="bg-surface-container-lowest dark:bg-[#0d1117] rounded-3xl p-8 md:p-12 lg:p-16 shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-gray-100 dark:border-gray-800 transition-colors duration-300 relative">
         <style dangerouslySetInnerHTML={{ __html: `
-          .custom-highlight mark {
+          .prose mark {
             background-color: ${subjectColor}40 !important;
             color: ${subjectColor} !important;
             padding: 0.1em 0.3em;
