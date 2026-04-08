@@ -52,10 +52,26 @@ export function buildSummaryPrompt(notes, imageCount = 0) {
   if (notes?.trim()) sources.push("the provided text notes");
   if (imageCount > 0) sources.push(`${imageCount} uploaded image(s)`);
 
-  return `You are an expert tutor. Summarize the following study materials in a clear, structured format with key concepts highlighted.Also you ruse examples where needed to explain the concepts better.
-  
-${notes?.trim() ? `Text notes:\n${notes}` : "No text notes provided."}
-${imageCount > 0 ? `\nAlso analyze the ${imageCount} attached image(s) for additional context and incorporate their key visual concepts.` : ""}
+  return `You are an expert tutor. Create a highly engaging, visual, and deeply structured study summary from ${sources.join(" and ")}.
 
-Highlight important terms in bold.`;
+STRUCTURE YOUR RESPONSE EXACTLY AS FOLLOWS:
+
+1.  **🚀 Quick Overview**: A high-level, 2-3 sentence summary of the entire topic.
+2.  **📌 Key Concepts**: Use a combination of bullet points and **Markdown Tables** to explain the main components. If comparing two things, ALWAYS use a table.
+3.  **🧠 Deep Dive**: Detailed explanation including examples. 
+4.  **📊 Process Flow**: If there is any sequential process, hierarchy, or relationship, you MUST generate a Mermaid.js flowchart inside a \`\`\`mermaid code block. Be precise with the syntax.
+5.  **⚠️ Watch Outs**: Common mistakes students make or tricky nuances regarding this topic.
+6.  **📖 Definitions**: A glossary of important terms in **bold**.
+7.  **💡 Did You Know?**: Interesting facts or real-world applications related to the topic.
+
+CRITICAL GUIDELINES:
+- Use relevant **emojis** for each heading and section.
+- Use **LaTeX** ($...$ or $$...$$) for any mathematical formulas or scientific notations.
+- Ensure the tone is encouraging and professional.
+- Use bolding and italics to make the text scannable.
+
+STUDY MATERIAL:
+${notes?.trim() ? `Text notes:\n${notes}` : "No text notes provided."}
+${imageCount > 0 ? `\nReference the visual concepts from the ${imageCount} attached image(s).` : ""}
+`;
 }

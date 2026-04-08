@@ -12,6 +12,7 @@ import { useReactToPrint } from 'react-to-print';
 import rehypeRaw from 'rehype-raw';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import MermaidBlock from '../components/MermaidBlock';
 import { formatMathForMarkdown } from '../utils/formatMathForMarkdown';
 import { toastConfirm } from '../utils/toastConfirm';
 const TopicSummary = () => {
@@ -282,6 +283,21 @@ const TopicSummary = () => {
             font-style: italic !important;
             color: inherit !important;
           }
+          @media print {
+            pre, code, .prose pre, .prose code {
+              white-space: pre-wrap !important;
+              word-wrap: break-word !important;
+              word-break: break-word !important;
+              overflow-x: hidden !important;
+            }
+            .mermaid-container {
+               break-inside: avoid;
+            }
+            .mermaid-container svg {
+               max-height: 80vh !important;
+               width: auto !important;
+            }
+          }
         `}} />
         
         {isEditing ? (
@@ -331,15 +347,23 @@ const TopicSummary = () => {
               components={{
                 code({inline, className, children, ...props}) {
                   const match = /language-(\w+)/.exec(className || '')
+                  const codeString = String(children).replace(/\n$/, '');
+                  
+                  if (!inline && match && match[1] === 'mermaid') {
+                    return <MermaidBlock chart={codeString} />;
+                  }
+                  
                   return !inline && match ? (
                     <SyntaxHighlighter
                       style={atomDark}
                       language={match[1]}
                       PreTag="div"
                       className="rounded-2xl overflow-hidden shadow-sm mt-6 mb-6"
+                      wrapLines={true}
+                      wrapLongLines={true}
                       {...props}
                     >
-                      {String(children).replace(/\n$/, '')}
+                      {codeString}
                     </SyntaxHighlighter>
                   ) : (
                     <code className={`${className} bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-tertiary dark:text-tertiary-fixed before:content-none after:content-none`} {...props}>

@@ -119,7 +119,7 @@ export async function generateFlashcards(notes, imageUrls = [], count = 10) {
   return object.flashcards;
 }
 
-export async function generateQuiz(notes, imageUrls = [], count = 5) {
+export async function generateQuiz(notes, imageUrls = [], count = 10) {
   const hasImages = imageUrls.length > 0;
 
   if (hasImages) {
